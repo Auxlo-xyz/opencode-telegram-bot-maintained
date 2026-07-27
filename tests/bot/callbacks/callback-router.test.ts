@@ -38,7 +38,7 @@ vi.mock("../../../src/i18n/index.js", async (importOriginal) => ({
   t: (key: string) => key,
 }));
 vi.mock("../../../src/utils/logger.js", () => ({
-  logger: { debug: vi.fn(), error: vi.fn() },
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("../../../src/bot/callbacks/agent-selection-callback-handler.js", () => ({
   handleAgentSelect: mocked.handleAgentSelect,

@@ -162,7 +162,7 @@ describe("synthesizeWithEdgeTts (WebSocket flow)", () => {
 
   function installMockWs(): void {
     vi.doMock("ws", () => ({
-      WebSocket: vi.fn(() => {
+      WebSocket: vi.fn(function () {
         const ws = createFakeWs();
         sockets.push(ws);
         return ws;

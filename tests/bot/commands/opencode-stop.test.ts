@@ -41,7 +41,9 @@ vi.mock("../../../src/bot/messages/telegram-text.js", () => ({
 
 vi.mock("../../../src/utils/logger.js", () => ({
   logger: {
+    debug: vi.fn(),
     info: mocked.loggerInfoMock,
+    warn: vi.fn(),
     error: mocked.loggerErrorMock,
   },
 }));

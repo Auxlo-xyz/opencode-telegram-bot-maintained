@@ -28,7 +28,9 @@ vi.mock("../../src/app/services/model-selection-service.js", () => ({
 vi.mock("../../src/utils/logger.js", () => ({
   logger: {
     debug: mocked.loggerDebugMock,
+    info: vi.fn(),
     warn: mocked.loggerWarnMock,
+    error: vi.fn(),
   },
 }));
 
