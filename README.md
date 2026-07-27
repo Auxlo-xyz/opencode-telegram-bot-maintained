@@ -473,6 +473,14 @@ Please follow commit and release note conventions in [CONTRIBUTING.md](CONTRIBUT
 
 Have questions, want to share your experience using the bot, or have an idea for a feature? Join the [Telegram group](https://t.me/+Fj_IyKRi6-41MGUy) for announcements and discussions, or start a thread in [GitHub Discussions](https://github.com/grinev/opencode-telegram-bot/discussions).
 
+## Support
+
+This project is free and open source. Development and testing run on paid AI model subscriptions, and donations go directly toward those.
+
+If you find this bot useful, you can support it here: [Donate](https://donate.trybit.com/D9J1UVKT)
+
+Any amount helps — thank you!
+
 ## License
 
 [MIT](LICENSE) © Ruslan Grinev
