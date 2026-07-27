@@ -9,7 +9,7 @@ import {
   notifyOpencodeReadyIfHealthy,
   registerOpenCodeReadyRefreshHandler,
 } from "../../opencode/ready-refresh.js";
-import { loadSettings } from "../stores/settings-store.js";
+import { flushSettings, loadSettings } from "../stores/settings-store.js";
 import { scheduledTaskRuntime } from "../services/scheduled-task-runtime-service.js";
 import { reconcileStoredModelSelection } from "../services/model-selection-service.js";
 import { getRuntimeMode } from "../../runtime/mode.js";
@@ -20,6 +20,7 @@ import { getLogFilePath, initializeLogger, logger } from "../../utils/logger.js"
 import { safeBackgroundTask } from "../../utils/safe-background-task.js";
 
 const SHUTDOWN_TIMEOUT_MS = 5000;
+const SETTINGS_FLUSH_TIMEOUT_MS = 1000;
 
 async function getBotVersion(): Promise<string> {
   try {
@@ -51,42 +52,7 @@ export async function startBotApp(): Promise<void> {
   logger.info(`Allowed User ID: ${config.telegram.allowedUserId}`);
   logger.debug(`[Runtime] Application start mode: ${mode}`);
 
-  const unhandledRejectionHandler = (reason: unknown): void => {
-    logger.error("[App] Unhandled promise rejection", reason);
-    void clearManagedServiceState()
-      .catch(() => {})
-      .finally(() => process.exit(1));
-  };
-
-  const uncaughtExceptionHandler = (error: Error): void => {
-    logger.error("[App] Uncaught exception", error);
-    void clearManagedServiceState()
-      .catch(() => {})
-      .finally(() => process.exit(1));
-  };
-
-  process.on("unhandledRejection", unhandledRejectionHandler);
-  process.on("uncaughtException", uncaughtExceptionHandler);
-
-  await loadSettings();
-  await reconcileStoredModelSelection();
-  registerOpenCodeReadyRefreshHandler();
-  const bot = createBot();
-  await scheduledTaskRuntime.initialize(
-    bot,
-    createScheduledTaskDeliverySender(bot.api, config.telegram.allowedUserId),
-  );
-  safeBackgroundTask({
-    taskName: "app.opencodeStartup",
-    task: async () => {
-      await opencodeAutoRestartService.start();
-      await notifyOpencodeReadyIfHealthy("startup");
-    },
-  });
-
-  let shutdownStarted = false;
   let serviceStateCleared = false;
-  let shutdownTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const clearManagedServiceState = async (): Promise<void> => {
     if (!isServiceChildProcess() || serviceStateCleared) {
@@ -113,6 +79,49 @@ export async function startBotApp(): Promise<void> {
     serviceStateCleared = true;
   };
 
+  // Bounded so a stalled write cannot cancel an emergency exit.
+  const flushSettingsWithTimeout = (): Promise<void> =>
+    Promise.race([
+      flushSettings(),
+      new Promise<void>((resolve) => setTimeout(resolve, SETTINGS_FLUSH_TIMEOUT_MS)),
+    ]);
+
+  // Keep the process alive: a single unhandled rejection must not take the bot
+  // down while the user is away and there is no supervisor to restart it.
+  const unhandledRejectionHandler = (reason: unknown): void => {
+    logger.error("[App] Unhandled promise rejection", reason);
+  };
+
+  const uncaughtExceptionHandler = (error: Error): void => {
+    logger.error("[App] Uncaught exception", error);
+    void clearManagedServiceState()
+      .catch(() => {})
+      .then(() => flushSettingsWithTimeout())
+      .finally(() => process.exit(1));
+  };
+
+  process.on("unhandledRejection", unhandledRejectionHandler);
+  process.on("uncaughtException", uncaughtExceptionHandler);
+
+  await loadSettings();
+  await reconcileStoredModelSelection();
+  registerOpenCodeReadyRefreshHandler();
+  const bot = createBot();
+  await scheduledTaskRuntime.initialize(
+    bot,
+    createScheduledTaskDeliverySender(bot.api, config.telegram.allowedUserId),
+  );
+  safeBackgroundTask({
+    taskName: "app.opencodeStartup",
+    task: async () => {
+      await opencodeAutoRestartService.start();
+      await notifyOpencodeReadyIfHealthy("startup");
+    },
+  });
+
+  let shutdownStarted = false;
+  let shutdownTimeout: ReturnType<typeof setTimeout> | null = null;
+
   const shutdown = (signal: NodeJS.Signals): void => {
     if (shutdownStarted) {
       return;
@@ -126,7 +135,7 @@ export async function startBotApp(): Promise<void> {
 
     shutdownTimeout = setTimeout(() => {
       logger.warn(`[App] Shutdown did not finish in ${SHUTDOWN_TIMEOUT_MS}ms, forcing exit.`);
-      process.exit(0);
+      void flushSettingsWithTimeout().finally(() => process.exit(0));
     }, SHUTDOWN_TIMEOUT_MS);
     shutdownTimeout.unref?.();
 
@@ -182,5 +191,6 @@ export async function startBotApp(): Promise<void> {
     await clearManagedServiceState().catch((error) => {
       logger.warn("[App] Failed to clear managed service state", error);
     });
+    await flushSettings();
   }
 }

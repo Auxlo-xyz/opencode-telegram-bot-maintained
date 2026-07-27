@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setRuntimeMode } from "../../../src/runtime/mode.js";
 import {
   __resetSettingsForTests,
+  flushSettings,
   getCompactOutputMode,
   getResponseStreamingMode,
   getSendDiffFileAttachments,
@@ -248,6 +249,28 @@ describe("app/stores/settings-store", () => {
       const settings = JSON.parse(await readFile(path.join(tempHome, "settings.json"), "utf-8"));
       expect(settings.showAssistantRunFooter).toBe(false);
     });
+  });
+
+  it("flushes a write queued by a fire-and-forget setter", async () => {
+    await loadSettings();
+
+    setCompactOutputMode(true);
+    await flushSettings();
+
+    const settings = JSON.parse(await readFile(path.join(tempHome, "settings.json"), "utf-8"));
+    expect(settings.compactOutputMode).toBe(true);
+  });
+
+  it("flushes the whole queue of pending writes", async () => {
+    await loadSettings();
+
+    setCompactOutputMode(true);
+    setShowThinkingContent(false);
+    await flushSettings();
+
+    const settings = JSON.parse(await readFile(path.join(tempHome, "settings.json"), "utf-8"));
+    expect(settings.compactOutputMode).toBe(true);
+    expect(settings.showThinkingContent).toBe(false);
   });
 
   it("persists response streaming mode to settings.json", async () => {

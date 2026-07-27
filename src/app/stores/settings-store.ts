@@ -60,6 +60,13 @@ function writeSettingsFile(settings: Settings): Promise<void> {
   return settingsWriteQueue;
 }
 
+// Awaits the writes queued at the moment of the call; writes queued later are not
+// covered. That is enough for shutdown, where everything able to write is already
+// stopped. The queue never rejects - writeSettingsFile handles its own errors.
+export function flushSettings(): Promise<void> {
+  return settingsWriteQueue;
+}
+
 let currentSettings: Settings = {};
 
 export function getCurrentProject(): ProjectInfo | undefined {
