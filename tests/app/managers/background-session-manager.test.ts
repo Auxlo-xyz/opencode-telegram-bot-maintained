@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BackgroundSessionTracker } from "../../../src/app/managers/background-session-manager.js";
 
 const mocked = vi.hoisted(() => ({
-  isScheduledTaskSessionIgnoredMock: vi.fn(() => false),
+  isScheduledTaskSessionIgnoredMock: vi.fn((_sessionId: string) => false),
 }));
 
 vi.mock("../../../src/app/services/scheduled-task-session-ignore-service.js", () => ({

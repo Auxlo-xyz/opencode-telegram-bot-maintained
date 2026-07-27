@@ -244,7 +244,7 @@ describe("bot/handlers/document", () => {
     });
 
     it("sends caption-only when model does not support PDF but caption exists", async () => {
-      const { ctx, replyMock } = createDocumentContext({
+      const { ctx } = createDocumentContext({
         document: {
           file_id: "pdf-file-id",
           file_unique_id: "pdf-unique-id",
@@ -361,7 +361,7 @@ describe("bot/handlers/document", () => {
           file_size: 5000,
         },
       });
-      const { deps, processPromptMock, downloadMock, getCapabilitiesMock } = createDocumentDeps({
+      const { deps, processPromptMock, downloadMock } = createDocumentDeps({
         getModelCapabilities: vi.fn().mockResolvedValue({
           input: { pdf: false },
         }),
@@ -387,7 +387,7 @@ describe("bot/handlers/document", () => {
     });
 
     it("extracts DOCX when model does not support PDF input", async () => {
-      const { ctx, replyMock } = createDocumentContext({
+      const { ctx } = createDocumentContext({
         document: {
           file_id: "docx-file-id",
           file_unique_id: "docx-unique-id",
@@ -396,7 +396,7 @@ describe("bot/handlers/document", () => {
           file_size: 5000,
         },
       });
-      const { deps, processPromptMock, getCapabilitiesMock } = createDocumentDeps({
+      const { deps, processPromptMock } = createDocumentDeps({
         getModelCapabilities: vi.fn().mockResolvedValue({
           input: { pdf: false },
         }),

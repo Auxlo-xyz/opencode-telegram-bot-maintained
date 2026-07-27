@@ -159,7 +159,7 @@ describe("pinned/manager", () => {
         cacheWrite: 0,
       });
 
-      const contextInfo = pinnedMessageManager.getContextInfo();
+      pinnedMessageManager.getContextInfo();
       // tokensUsed = input + cacheRead = 5000 + 1000 = 6000
       // contextInfo may be null if tokensLimit is 0, so check via getContextInfo
       // The key assertion: no API call was made

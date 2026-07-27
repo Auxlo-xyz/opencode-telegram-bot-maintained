@@ -5,7 +5,10 @@ import {
   parseMessagePageCallback,
 } from "../../../src/bot/menus/message-history-menu.js";
 import { messagesCommand } from "../../../src/bot/commands/messages-command.js";
-import { handleMessagesCallback } from "../../../src/bot/callbacks/message-history-callback-handler.js";
+import {
+  handleMessagesCallback,
+  type MessagesCallbackDeps,
+} from "../../../src/bot/callbacks/message-history-callback-handler.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { t } from "../../../src/i18n/index.js";
 
@@ -91,7 +94,7 @@ const testDeps = {
     },
   },
   ensureEventSubscription: vi.fn().mockResolvedValue(undefined),
-};
+} as unknown as MessagesCallbackDeps;
 
 function makeUserMessage(id: string, text: string, created: number) {
   return {

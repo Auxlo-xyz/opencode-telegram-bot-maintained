@@ -27,8 +27,9 @@
     "release:prepare": "node scripts/release-prepare.mjs",
     "release:rc": "node scripts/release-prepare.mjs rc",
     "release:notes:preview": "node scripts/release-notes-preview.mjs",
-    "lint": "eslint src --max-warnings=0",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint src tests --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

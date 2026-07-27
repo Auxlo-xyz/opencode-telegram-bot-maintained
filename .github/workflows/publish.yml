@@ -102,6 +102,10 @@ jobs:
         if: steps.determine.outputs.should_release == 'true'
         run: npm run lint
 
+      - name: Typecheck
+        if: steps.determine.outputs.should_release == 'true'
+        run: npm run typecheck
+
       - name: Build
         if: steps.determine.outputs.should_release == 'true'
         run: npm run build

@@ -435,6 +435,7 @@ npm run dev
 | `npm start`                     | Run compiled code                    |
 | `npm run release:notes:preview` | Preview auto-generated release notes |
 | `npm run lint`                  | ESLint check (zero warnings policy)  |
+| `npm run typecheck`             | Type-check `src` and `tests`         |
 | `npm run format`                | Format code with Prettier            |
 | `npm test`                      | Run tests (Vitest)                   |
 | `npm run test:coverage`         | Tests with coverage report           |

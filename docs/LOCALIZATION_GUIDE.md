@@ -77,6 +77,7 @@ Run quality checks:
 ```bash
 npm run build
 npm run lint
+npm run typecheck
 npm test
 ```
 
@@ -106,5 +107,5 @@ Relevant test files if needed:
 - [ ] Imported locale in `src/i18n/index.ts`
 - [ ] Added locale entry to `LOCALE_DEFINITIONS`
 - [ ] Updated `README.md` (language list and localization section)
-- [ ] Ran `npm run build`, `npm run lint`, `npm test`
+- [ ] Ran `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`
 - [ ] Manually validated `BOT_LOCALE` and wizard language selection

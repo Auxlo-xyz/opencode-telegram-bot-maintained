@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InlineKeyboard } from "grammy";
+import type { InlineKeyboardButton } from "grammy/types";
 
 const mocked = vi.hoisted(() => ({
   getModelSelectionListsMock: vi.fn(),
@@ -94,6 +95,10 @@ function mockContext(overrides: Record<string, unknown> = {}) {
   } as unknown as import("grammy").Context;
 }
 
+function getCallbackData(button: InlineKeyboardButton): string | undefined {
+  return "callback_data" in button ? button.callback_data : undefined;
+}
+
 describe("bot model selection", () => {
   beforeEach(() => {
     mocked.getModelSelectionListsMock.mockReset();
@@ -130,7 +135,7 @@ describe("bot model selection", () => {
       const rows = keyboard.inline_keyboard;
       expect(rows.length).toBeGreaterThanOrEqual(1);
       expect(rows[0][0].text).toBe("🔍 Search");
-      expect(rows[0][0].callback_data).toBe("model:search");
+      expect(getCallbackData(rows[0][0])).toBe("model:search");
     });
 
     it("still returns keyboard with search button when no favorites or recent", async () => {
@@ -144,7 +149,7 @@ describe("bot model selection", () => {
       // Keyboard always has at least the search button row
       expect(keyboard.inline_keyboard.length).toBeGreaterThanOrEqual(1);
       expect(keyboard.inline_keyboard[0][0].text).toBe("🔍 Search");
-      expect(keyboard.inline_keyboard[0][0].callback_data).toBe("model:search");
+      expect(getCallbackData(keyboard.inline_keyboard[0][0])).toBe("model:search");
     });
 
     it("uses short callback data for long model IDs", async () => {
@@ -155,7 +160,7 @@ describe("bot model selection", () => {
       });
 
       const keyboard = await buildModelSelectionMenu();
-      const callbackData = keyboard.inline_keyboard[1][0].callback_data;
+      const callbackData = getCallbackData(keyboard.inline_keyboard[1][0]);
 
       expect(callbackData).toBe("model:list:recent:0");
       expect(Buffer.byteLength(callbackData ?? "", "utf-8")).toBeLessThanOrEqual(64);

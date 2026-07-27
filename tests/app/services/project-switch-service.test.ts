@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "grammy";
+import type { ModelInfo } from "../../../src/app/types/model.js";
 
 const mocked = vi.hoisted(() => ({
   setCurrentProjectMock: vi.fn(),
@@ -14,11 +15,13 @@ const mocked = vi.hoisted(() => ({
   keyboardUpdateAgentMock: vi.fn(),
   getStoredAgentMock: vi.fn(() => "code"),
   resolveProjectAgentMock: vi.fn(async (agent: string) => agent),
-  getStoredModelMock: vi.fn(() => ({
-    providerID: "anthropic",
-    modelID: "claude-4",
-    variant: "default",
-  })),
+  getStoredModelMock: vi.fn(
+    (): ModelInfo => ({
+      providerID: "anthropic",
+      modelID: "claude-4",
+      variant: "default",
+    }),
+  ),
   formatVariantMock: vi.fn(() => "Default"),
   createMainKeyboardMock: vi.fn(() => ({ keyboard: [[{ text: "mock" }]] })),
 }));

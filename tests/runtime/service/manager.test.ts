@@ -1,11 +1,14 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+
+type ExecCallback = (error: Error | null, stdout: string, stderr: string) => void;
+type ExecFn = (command: string, callback: ExecCallback) => unknown;
 
 const { spawnMock, execMock } = vi.hoisted(() => {
   const spawnMock = vi.fn();
-  const execMock = vi.fn() as ReturnType<typeof vi.fn> & {
+  const execMock = vi.fn<ExecFn>() as Mock<ExecFn> & {
     [key: symbol]: (command: string) => Promise<{ stdout: string; stderr: string }>;
   };
 
@@ -97,10 +100,8 @@ describe("runtime/service/manager", () => {
 
     spawnMock.mockReset();
     execMock.mockReset();
-    execMock.mockImplementation((_command: string, callback?: (...args: unknown[]) => void) => {
-      if (callback) {
-        callback(null, "", "");
-      }
+    execMock.mockImplementation((_command: string, callback: ExecCallback) => {
+      callback(null, "", "");
 
       return {};
     });
@@ -200,24 +201,22 @@ describe("runtime/service/manager", () => {
       }),
     );
 
-    vi.spyOn(process, "kill").mockImplementation(
-      (_pid: number, signal?: NodeJS.Signals | number) => {
-        if (signal === 0 || signal === undefined) {
-          if (isRunning) {
-            return true;
-          }
-
-          throw new Error("ESRCH");
-        }
-
-        if (signal === "SIGTERM") {
-          isRunning = false;
+    vi.spyOn(process, "kill").mockImplementation((_pid: number, signal?: string | number) => {
+      if (signal === 0 || signal === undefined) {
+        if (isRunning) {
           return true;
         }
 
+        throw new Error("ESRCH");
+      }
+
+      if (signal === "SIGTERM") {
+        isRunning = false;
         return true;
-      },
-    );
+      }
+
+      return true;
+    });
 
     try {
       const result = await stopBotDaemon(50);

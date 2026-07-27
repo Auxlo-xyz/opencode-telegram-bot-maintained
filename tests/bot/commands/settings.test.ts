@@ -207,16 +207,16 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("settings.saved") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[0][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[0][0].text).toBe(
       `${t("settings.compact_output.label")}: ${t("settings.value.on")}`,
     );
-    expect(opts?.reply_markup.inline_keyboard[1][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[1][0].text).toBe(
       `${t("settings.response_streaming.label")}: ${t("settings.response_streaming.edit")}`,
     );
-    expect(opts?.reply_markup.inline_keyboard[2][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[2][0].text).toBe(
       `${t("settings.assistant_footer.label")}: ${t("settings.value.on")}`,
     );
-    expect(opts?.reply_markup.inline_keyboard[3][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[3][0].text).toBe(
       `${t("settings.tts.label")}: ${t("status.tts.off")}`,
     );
   });
@@ -235,7 +235,7 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("settings.saved") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[1][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[1][0].text).toBe(
       `${t("settings.thinking_content.label")}: ${t("settings.value.off")}`,
     );
   });
@@ -255,7 +255,7 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("settings.saved") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[2][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[2][0].text).toBe(
       `${t("settings.diff_files.label")}: ${t("settings.value.off")}`,
     );
   });
@@ -275,7 +275,7 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("settings.saved") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[3][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[3][0].text).toBe(
       `${t("settings.response_streaming.label")}: ${t("settings.response_streaming.draft")}`,
     );
   });
@@ -295,7 +295,7 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("settings.saved") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[4][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[4][0].text).toBe(
       `${t("settings.assistant_footer.label")}: ${t("settings.value.off")}`,
     );
   });
@@ -315,7 +315,7 @@ describe("bot/callbacks/settings-callback-handler", () => {
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("tts.all") });
     const [text, opts] = vi.mocked(ctx.editMessageText).mock.calls[0];
     expect(text).toBe(t("settings.menu.title"));
-    expect(opts?.reply_markup.inline_keyboard[5][0].text).toBe(
+    expect(opts?.reply_markup?.inline_keyboard[5][0].text).toBe(
       `${t("settings.tts.label")}: ${t("status.tts.all")}`,
     );
   });

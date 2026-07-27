@@ -230,9 +230,9 @@ describe("busy reconciliation", () => {
     });
 
     const mockStreamer = {
-      hasActiveStream: vi.fn().mockReturnValue(true),
+      hasActiveStream: vi.fn((_sessionId: string) => true),
     };
-    setResponseStreamerForReconciliation(mockStreamer as any);
+    setResponseStreamerForReconciliation(mockStreamer);
 
     await reconcileBusyStateNow("D:/repo", 13_000);
 
@@ -252,9 +252,9 @@ describe("busy reconciliation", () => {
     });
 
     const mockStreamer = {
-      hasActiveStream: vi.fn().mockReturnValue(false),
+      hasActiveStream: vi.fn((_sessionId: string) => false),
     };
-    setResponseStreamerForReconciliation(mockStreamer as any);
+    setResponseStreamerForReconciliation(mockStreamer);
 
     await reconcileBusyStateNow("D:/repo", 13_000);
 

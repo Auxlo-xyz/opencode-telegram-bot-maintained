@@ -319,7 +319,7 @@ describe("app/services/scheduled-task-runtime-service", () => {
     await runtime.initialize({ api: {} } as Bot<Context>, await createDeliverySender());
     await Promise.resolve();
 
-    (runtime as any).startExecution("task-1");
+    (runtime as unknown as { startExecution(taskId: string): void }).startExecution("task-1");
 
     expect(mocked.executeScheduledTaskMock).toHaveBeenCalledTimes(1);
 

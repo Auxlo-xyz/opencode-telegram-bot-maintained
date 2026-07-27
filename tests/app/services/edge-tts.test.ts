@@ -12,7 +12,6 @@ vi.mock("../../../src/utils/logger.js", () => ({
 import {
   generateSecMsGec,
   splitTextByByteLength,
-  synthesizeWithEdgeTts,
   EDGE_DEFAULT_VOICE,
   SEC_MS_GEC_VERSION,
   _resetClockSkew,
