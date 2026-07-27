@@ -14,6 +14,17 @@
 
 set -uo pipefail
 
+# Git Bash / MSYS cannot see native Windows processes: ps, kill and lsof only
+# know about the emulation layer, so this script would report "nothing running"
+# while the bot and OpenCode are very much alive. Refuse instead of lying.
+case "$(uname -s 2>/dev/null || echo unknown)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "This script cannot see Windows processes and would report a false clean." >&2
+    echo "Use the PowerShell version instead:  .\\e2e\\stop-test-bot.ps1" >&2
+    exit 2
+    ;;
+esac
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_root="$(dirname "$script_dir")"
 test_home="$project_root/.tmp/e2e/home"
