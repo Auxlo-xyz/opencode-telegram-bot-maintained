@@ -74,6 +74,7 @@ No public inbound ports are required for normal usage.
 
 - Whitelist by Telegram user ID (single-user mode)
 - Ignore messages from non-authorized users
+- Ignore updates queued while the bot was offline or unreachable, so they are not executed on startup
 
 ### Configuration
 

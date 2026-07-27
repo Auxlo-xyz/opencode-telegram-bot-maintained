@@ -147,6 +147,13 @@ export async function startBotApp(): Promise<void> {
   process.on("SIGTERM", handleSigterm);
 
   const webhookInfo = await bot.api.getWebhookInfo();
+  if (webhookInfo.pending_update_count > 0) {
+    // Approximate: more updates can arrive before long polling actually drops
+    // the queue, and Telegram does not report how many were discarded.
+    logger.info(
+      `[Bot] Dropping ~${webhookInfo.pending_update_count} update(s) queued while the bot was offline`,
+    );
+  }
   if (webhookInfo.url) {
     logger.info(`[Bot] Webhook detected: ${webhookInfo.url}, removing...`);
     await bot.api.deleteWebhook();
@@ -155,6 +162,7 @@ export async function startBotApp(): Promise<void> {
 
   try {
     await bot.start({
+      drop_pending_updates: true,
       onStart: (botInfo) => {
         logger.info(`Bot @${botInfo.username} started!`);
       },
