@@ -26,16 +26,94 @@ function getSettingsFilePath(): string {
   return getRuntimePaths().settingsFilePath;
 }
 
+function getSettingsBackupFilePath(): string {
+  return `${getSettingsFilePath()}.bak`;
+}
+
+// Lives next to the target file so the rename never crosses a volume boundary.
+function getSettingsTempFilePath(): string {
+  return `${getSettingsFilePath()}.tmp`;
+}
+
+// Set when settings were recovered from the backup: the target file still holds
+// the damaged content, so rotating it into the backup would destroy the only
+// good copy. Cleared by the first successful write.
+let skipNextBackupRotation = false;
+
+function isFileNotFound(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException).code === "ENOENT";
+}
+
+async function readSettingsFileAt(filePath: string): Promise<Settings> {
+  const fs = await import("fs/promises");
+  const content = await fs.readFile(filePath, "utf-8");
+  return JSON.parse(content) as Settings;
+}
+
 async function readSettingsFile(): Promise<Settings> {
+  const settingsFilePath = getSettingsFilePath();
+  const backupFilePath = getSettingsBackupFilePath();
+
   try {
-    const fs = await import("fs/promises");
-    const content = await fs.readFile(getSettingsFilePath(), "utf-8");
-    return JSON.parse(content) as Settings;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      logger.error("[SettingsManager] Error reading settings file:", error);
+    return await readSettingsFileAt(settingsFilePath);
+  } catch (primaryError) {
+    if (!isFileNotFound(primaryError)) {
+      logger.warn(
+        `[SettingsManager] Cannot read settings file ${settingsFilePath}:`,
+        primaryError,
+      );
     }
-    return {};
+
+    try {
+      const backupSettings = await readSettingsFileAt(backupFilePath);
+      logger.warn(`[SettingsManager] Recovered settings from backup ${backupFilePath}`);
+      skipNextBackupRotation = true;
+      return backupSettings;
+    } catch (backupError) {
+      if (isFileNotFound(primaryError) && isFileNotFound(backupError)) {
+        return {};
+      }
+
+      logger.error(
+        `[SettingsManager] Settings file ${settingsFilePath} and its backup ${backupFilePath} are both unusable.`,
+        { primaryError, backupError },
+      );
+      throw new Error(
+        `Cannot read settings: ${settingsFilePath} and its backup ${backupFilePath} are both unusable. ` +
+          "Both files were left untouched - fix or remove them manually and start the bot again.",
+      );
+    }
+  }
+}
+
+async function writeSettingsFileAtomically(settings: Settings): Promise<void> {
+  const fs = await import("fs/promises");
+  const settingsFilePath = getSettingsFilePath();
+  const tempFilePath = getSettingsTempFilePath();
+
+  await fs.mkdir(path.dirname(settingsFilePath), { recursive: true });
+
+  try {
+    await fs.writeFile(tempFilePath, JSON.stringify(settings, null, 2));
+
+    if (!skipNextBackupRotation) {
+      try {
+        await fs.rename(settingsFilePath, getSettingsBackupFilePath());
+      } catch (error) {
+        // Nothing to back up on the very first write.
+        if (!isFileNotFound(error)) {
+          throw error;
+        }
+      }
+    }
+
+    await fs.rename(tempFilePath, settingsFilePath);
+    skipNextBackupRotation = false;
+  } catch (error) {
+    await fs.rm(tempFilePath, { force: true }).catch(() => {
+      // Best-effort cleanup of the temporary file.
+    });
+    throw error;
   }
 }
 
@@ -48,10 +126,7 @@ function writeSettingsFile(settings: Settings): Promise<void> {
     })
     .then(async () => {
       try {
-        const fs = await import("fs/promises");
-        const settingsFilePath = getSettingsFilePath();
-        await fs.mkdir(path.dirname(settingsFilePath), { recursive: true });
-        await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
+        await writeSettingsFileAtomically(settings);
       } catch (err) {
         logger.error("[SettingsManager] Error writing settings file:", err);
       }
@@ -234,6 +309,7 @@ export function setScheduledTaskSessionIgnores(
 export function __resetSettingsForTests(): void {
   currentSettings = {};
   settingsWriteQueue = Promise.resolve();
+  skipNextBackupRotation = false;
 }
 
 const VALID_TTS_MODES: readonly TtsMode[] = ["off", "all", "auto"];
