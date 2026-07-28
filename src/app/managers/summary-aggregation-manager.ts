@@ -184,6 +184,48 @@ interface SubagentState extends SubagentInfo {
   createdAt: number;
 }
 
+// When a model returns a response without a text block, the upstream provider
+// serializes the raw response object into a text part instead of leaving it
+// empty. Such a part is internal noise and must never reach the user. The
+// trailing quote is part of the marker: the dump is a Python repr, so the first
+// key is always single-quoted, which prose does not do.
+const UPSTREAM_EMPTY_RESPONSE_MARKER = "Empty response: {'";
+
+// A key that only the serialized response object carries. The model can be
+// asked to start a legitimate answer with the marker, so the marker alone is
+// not enough to discard text for good.
+const UPSTREAM_EMPTY_RESPONSE_KEY = "'stop_reason'";
+
+// Suppression happens in two tiers, because the decision has to be made twice
+// under different amounts of information.
+//
+// While the part is still streaming, the text arrives character by character
+// and there is no way to tell the placeholder from an answer that merely opens
+// the same way - so anything that still looks like the marker is held back.
+// The text is only hidden, never lost, but the cost is not zero: such an answer
+// shows no live preview and appears at once when the message completes.
+//
+// Once the message is complete the full text is known, and discarding it is
+// final. At that point the marker alone is not enough: the serialized response
+// object must also be there, otherwise the text is a legitimate answer and is
+// released.
+function isUpstreamEmptyResponseText(text: string, isFinal: boolean): boolean {
+  const trimmed = text.trimStart();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (trimmed.length < UPSTREAM_EMPTY_RESPONSE_MARKER.length) {
+    return !isFinal && UPSTREAM_EMPTY_RESPONSE_MARKER.startsWith(trimmed);
+  }
+
+  if (!trimmed.startsWith(UPSTREAM_EMPTY_RESPONSE_MARKER)) {
+    return false;
+  }
+
+  return isFinal ? trimmed.includes(UPSTREAM_EMPTY_RESPONSE_KEY) : true;
+}
+
 function extractFirstUpdatedFileFromTitle(title: string): string {
   for (const rawLine of title.split("\n")) {
     const line = rawLine.trim();
@@ -1102,7 +1144,7 @@ class SummaryAggregator {
       };
       const time = assistantMessage.time;
       const isCompleted = Boolean(time?.completed);
-      const messageText = this.getCombinedMessageText(messageID);
+      const messageText = this.getCombinedMessageText(messageID, isCompleted);
 
       if (!isCompleted && textState.optimisticUpdateCount === 1) {
         this.emitPartialText(info.sessionID, messageID, messageText);
@@ -1141,6 +1183,17 @@ class SummaryAggregator {
         logger.debug(
           `[Aggregator] Message part completed: messageId=${messageID}, textLength=${finalText.length}, totalParts=${textState.orderedPartIds.length}, session=${this.currentSessionId}`,
         );
+
+        // This is the only trace left once the placeholder is filtered out, so
+        // an upstream regression stays visible in the logs.
+        const droppedParts = textState.orderedPartIds.filter((partID) =>
+          isUpstreamEmptyResponseText(textState.partTexts.get(partID) || "", true),
+        );
+        if (droppedParts.length > 0) {
+          logger.warn(
+            `[Aggregator] Dropped upstream empty-response placeholder: messageId=${messageID}, parts=${droppedParts.length}, session=${this.currentSessionId}`,
+          );
+        }
 
         // Extract and report cost
         if (this.onCostCallback && assistantInfo.cost !== undefined) {
@@ -1783,13 +1836,21 @@ class SummaryAggregator {
     return true;
   }
 
-  private getCombinedMessageText(messageID: string): string {
+  private getCombinedMessageText(messageID: string, isFinal = false): string {
     const state = this.textMessageStates.get(messageID);
     if (!state) {
       return "";
     }
 
-    return state.orderedPartIds.map((partID) => state.partTexts.get(partID) || "").join("");
+    const texts = state.orderedPartIds.map((partID) => state.partTexts.get(partID) || "");
+
+    // The placeholder is produced for model responses only, so user text is
+    // never filtered - it must reach the bot verbatim.
+    if (this.messages.get(messageID)?.role === "user") {
+      return texts.join("");
+    }
+
+    return texts.filter((text) => !isUpstreamEmptyResponseText(text, isFinal)).join("");
   }
 
   private prepareToolFileContext(
