@@ -428,11 +428,13 @@ class PinnedMessageManager {
       );
 
       if (!error && data && data.length > 0) {
-        this.state.changedFiles = data.map((d) => ({
-          file: d.file,
-          additions: d.additions,
-          deletions: d.deletions,
-        }));
+        this.state.changedFiles = data
+          .filter((d): d is typeof d & { file: string } => !!d.file)
+          .map((d) => ({
+            file: d.file,
+            additions: d.additions,
+            deletions: d.deletions,
+          }));
         logger.info(
           `[PinnedManager] Loaded ${this.state.changedFiles.length} file diffs from session.diff()`,
         );
