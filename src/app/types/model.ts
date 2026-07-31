@@ -18,6 +18,12 @@ export interface FavoriteModel {
   modelID: string;
 }
 
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  modelCount: number;
+}
+
 export interface ModelSelectionLists {
   favorites: FavoriteModel[];
   recent: FavoriteModel[];

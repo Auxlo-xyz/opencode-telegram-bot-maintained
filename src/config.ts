@@ -211,6 +211,7 @@ export const config = {
     messagesListLimit: getOptionalPositiveIntEnvVar("MESSAGES_LIST_LIMIT", 10),
     projectsListLimit: getOptionalPositiveIntEnvVar("PROJECTS_LIST_LIMIT", 10),
     commandsListLimit: getOptionalPositiveIntEnvVar("COMMANDS_LIST_LIMIT", 10),
+    modelsListLimit: getOptionalPositiveIntEnvVar("MODELS_LIST_LIMIT", 10),
     taskLimit: getOptionalPositiveIntEnvVar("TASK_LIMIT", 10),
     scheduledTaskExecutionTimeoutMinutes: getOptionalPositiveIntEnvVar(
       "SCHEDULED_TASK_EXECUTION_TIMEOUT_MINUTES",
