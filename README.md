@@ -17,7 +17,7 @@ Scheduled tasks support. Turns the bot into a lightweight OpenClaw alternative f
 
 Platforms: macOS, Windows, Linux
 
-Languages: English (`en`), العربية (`ar`), Deutsch (`de`), Español (`es`), Français (`fr`), Русский (`ru`), 简体中文 (`zh`)
+Languages: English (`en`), العربية (`ar`), Deutsch (`de`), Español (`es`), Français (`fr`), Português (Brasil) (`pt`), Русский (`ru`), 简体中文 (`zh`)
 
 <p align="center">
   <img src="assets/screencast.gif" width="45%" alt="OpenCode Telegram Bot screencast" />
