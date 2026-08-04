@@ -2224,4 +2224,146 @@ describe("summary/aggregator", () => {
       "Empty response body is expected here.",
     );
   });
+
+  it("ignores synthetic text parts so an attached file is not echoed into the chat", async () => {
+    const onExternalUserInput = vi.fn();
+    summaryAggregator.setOnExternalUserInput(onExternalUserInput);
+    summaryAggregator.setSession("session-1");
+
+    summaryAggregator.processEvent({
+      type: "message.updated",
+      properties: {
+        info: {
+          id: "message-user",
+          sessionID: "session-1",
+          role: "user",
+          time: { created: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "part-prompt",
+          sessionID: "session-1",
+          messageID: "message-user",
+          type: "text",
+          text: "what does this file do?",
+        },
+      },
+    } as unknown as Event);
+
+    // OpenCode expands a file:// attachment into synthetic parts carrying the whole file.
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "part-synthetic",
+          sessionID: "session-1",
+          messageID: "message-user",
+          type: "text",
+          synthetic: true,
+          text: "Called the Read tool with the following input: {}\n1: SECRET_FILE_CONTENT",
+        },
+      },
+    } as unknown as Event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    for (const call of onExternalUserInput.mock.calls) {
+      expect(call[2]).not.toContain("SECRET_FILE_CONTENT");
+      expect(call[2]).not.toContain("Called the Read tool");
+    }
+  });
+
+  it("ignores deltas streamed for a part already known to be synthetic", async () => {
+    const onExternalUserInput = vi.fn();
+    summaryAggregator.setOnExternalUserInput(onExternalUserInput);
+    summaryAggregator.setSession("session-1");
+
+    summaryAggregator.processEvent({
+      type: "message.updated",
+      properties: {
+        info: {
+          id: "message-user-delta",
+          sessionID: "session-1",
+          role: "user",
+          time: { created: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.part.updated",
+      properties: {
+        part: {
+          id: "part-synthetic-streamed",
+          sessionID: "session-1",
+          messageID: "message-user-delta",
+          type: "text",
+          synthetic: true,
+          text: "Called the Read tool with the following input: {}",
+        },
+      },
+    } as unknown as Event);
+
+    // Delta events often carry only the part id, so the flag must be remembered.
+    summaryAggregator.processEvent({
+      type: "message.part.delta",
+      properties: {
+        part: {
+          id: "part-synthetic-streamed",
+          sessionID: "session-1",
+          messageID: "message-user-delta",
+        },
+        delta: "\n1: SECRET_STREAMED_CONTENT",
+      },
+    } as unknown as Event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    for (const call of onExternalUserInput.mock.calls) {
+      expect(call[2]).not.toContain("SECRET_STREAMED_CONTENT");
+    }
+  });
+
+  it("ignores a delta whose own part is flagged synthetic", async () => {
+    const onExternalUserInput = vi.fn();
+    summaryAggregator.setOnExternalUserInput(onExternalUserInput);
+    summaryAggregator.setSession("session-1");
+
+    summaryAggregator.processEvent({
+      type: "message.updated",
+      properties: {
+        info: {
+          id: "message-user-delta-first",
+          sessionID: "session-1",
+          role: "user",
+          time: { created: Date.now() },
+        },
+      },
+    } as unknown as Event);
+
+    summaryAggregator.processEvent({
+      type: "message.part.delta",
+      properties: {
+        part: {
+          id: "part-synthetic-first",
+          sessionID: "session-1",
+          messageID: "message-user-delta-first",
+          type: "text",
+          synthetic: true,
+        },
+        delta: "1: SECRET_FIRST_DELTA",
+      },
+    } as unknown as Event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    for (const call of onExternalUserInput.mock.calls) {
+      expect(call[2]).not.toContain("SECRET_FIRST_DELTA");
+    }
+  });
 });

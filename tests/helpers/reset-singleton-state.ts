@@ -59,6 +59,7 @@ export async function resetSingletonState(): Promise<void> {
     { __resetMessageMergerForTests },
     { promptQueue },
     { __resetPromptQueueDispatchForTests },
+    { promptAttachment },
     loggerModule,
   ] = await Promise.all([
     import("../../src/app/managers/question-manager.js"),
@@ -73,6 +74,7 @@ export async function resetSingletonState(): Promise<void> {
     import("../../src/bot/handlers/message-merger.js"),
     import("../../src/app/managers/prompt-queue-manager.js"),
     import("../../src/bot/handlers/prompt-queue-dispatch.js"),
+    import("../../src/app/managers/prompt-attachment-manager.js"),
     import("../../src/utils/logger.js"),
   ]);
 
@@ -85,6 +87,7 @@ export async function resetSingletonState(): Promise<void> {
   __resetMessageMergerForTests();
   promptQueue.__resetForTests();
   __resetPromptQueueDispatchForTests();
+  promptAttachment.__resetForTests();
 
   const aggregator = summaryAggregator as unknown as SummaryAggregatorPrivateState;
   aggregator.onCompleteCallback = null;

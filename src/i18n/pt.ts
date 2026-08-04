@@ -673,4 +673,10 @@ export const pt: I18nDictionary = {
   "ls.file.header": "Detalhes do arquivo",
   "ls.file.download": "📥 Baixar",
   "ls.file.back": "⬅️ Voltar",
+  "ls.file.attach": "📎 Anexar ao próximo prompt",
+  "attachment.added": "📎 Anexado: {path}\n\nEnvie sua mensagem e o arquivo irá junto.",
+  "attachment.cancel": "❌ Cancelar anexo",
+  "attachment.cancelled": "❌ Anexo cancelado",
+  "attachment.invalid":
+    "⚠️ O arquivo anexado não está mais disponível. Enviando a mensagem sem ele.",
 };

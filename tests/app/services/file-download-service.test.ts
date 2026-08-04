@@ -5,6 +5,7 @@ import {
   toDataUri,
   formatFileSize,
   isFileSizeAllowed,
+  isTextFileName,
   isTextMimeType,
 } from "../../../src/app/services/file-download-service.js";
 
@@ -143,6 +144,45 @@ describe("app/services/file-download-service", () => {
 
     it("handles files with no extension", () => {
       expect(isTextMimeType("application/octet-stream", "Dockerfile")).toBe(false);
+    });
+  });
+
+  describe("isTextFileName", () => {
+    it("accepts source files by extension", () => {
+      expect(isTextFileName("index.ts")).toBe(true);
+      expect(isTextFileName("app.js")).toBe(true);
+      expect(isTextFileName("package.json")).toBe(true);
+      expect(isTextFileName("notes.txt")).toBe(true);
+      expect(isTextFileName("main.py")).toBe(true);
+    });
+
+    it("accepts known extensionless files and dotfiles", () => {
+      expect(isTextFileName("Makefile")).toBe(true);
+      expect(isTextFileName("Dockerfile")).toBe(true);
+      expect(isTextFileName(".env.example")).toBe(true);
+      expect(isTextFileName(".gitignore")).toBe(true);
+    });
+
+    it("is case-insensitive for extensionless names", () => {
+      expect(isTextFileName("MAKEFILE")).toBe(true);
+      expect(isTextFileName("dockerfile")).toBe(true);
+    });
+
+    it("accepts a full path by looking only at the base name", () => {
+      expect(isTextFileName("D:\\Repo\\src\\bot\\index.ts")).toBe(true);
+      expect(isTextFileName("/repo/src/Makefile")).toBe(true);
+    });
+
+    it("rejects binary files", () => {
+      expect(isTextFileName("logo.png")).toBe(false);
+      expect(isTextFileName("app.exe")).toBe(false);
+      expect(isTextFileName("archive.zip")).toBe(false);
+      expect(isTextFileName("doc.pdf")).toBe(false);
+    });
+
+    it("rejects unknown extensionless files", () => {
+      expect(isTextFileName("mystery")).toBe(false);
+      expect(isTextFileName("")).toBe(false);
     });
   });
 });

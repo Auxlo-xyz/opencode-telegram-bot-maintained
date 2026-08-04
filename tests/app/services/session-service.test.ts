@@ -13,6 +13,7 @@ vi.mock("../../../src/app/stores/settings-store.js", () => ({
 }));
 
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
+import { promptAttachment } from "../../../src/app/managers/prompt-attachment-manager.js";
 import { clearSession, setCurrentSession } from "../../../src/app/services/session-service.js";
 
 const SESSION = { id: "session-1", title: "Session 1", directory: "D:\\Projects\\Repo" };
@@ -21,6 +22,7 @@ describe("app/services/session-service", () => {
   beforeEach(() => {
     settingsSession.current = null;
     promptQueue.__resetForTests();
+    promptAttachment.__resetForTests();
   });
 
   it("drops queued prompts when switching to another session", () => {
@@ -48,5 +50,32 @@ describe("app/services/session-service", () => {
     clearSession();
 
     expect(promptQueue.size()).toBe(0);
+  });
+
+  it("drops the pending attachment when switching to another session", () => {
+    setCurrentSession(SESSION);
+    promptAttachment.set("D:\\Projects\\Repo\\src\\index.ts", "D:\\Projects\\Repo");
+
+    setCurrentSession({ ...SESSION, id: "session-2" });
+
+    expect(promptAttachment.get()).toBeNull();
+  });
+
+  it("keeps the pending attachment when the same session is only renamed", () => {
+    setCurrentSession(SESSION);
+    promptAttachment.set("D:\\Projects\\Repo\\src\\index.ts", "D:\\Projects\\Repo");
+
+    setCurrentSession({ ...SESSION, title: "Renamed" });
+
+    expect(promptAttachment.get()).not.toBeNull();
+  });
+
+  it("drops the pending attachment when the session is cleared", () => {
+    setCurrentSession(SESSION);
+    promptAttachment.set("D:\\Projects\\Repo\\src\\index.ts", "D:\\Projects\\Repo");
+
+    clearSession();
+
+    expect(promptAttachment.get()).toBeNull();
   });
 });

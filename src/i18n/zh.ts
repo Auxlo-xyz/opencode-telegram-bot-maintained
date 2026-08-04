@@ -600,4 +600,9 @@ export const zh: I18nDictionary = {
   "ls.file.header": "文件详情",
   "ls.file.download": "📥 下载",
   "ls.file.back": "⬅️ 返回",
+  "ls.file.attach": "📎 附加到下一条提示",
+  "attachment.added": "📎 已附加：{path}\n\n发送消息后文件将一并发送。",
+  "attachment.cancel": "❌ 取消附加",
+  "attachment.cancelled": "❌ 已取消附加",
+  "attachment.invalid": "⚠️ 附加的文件已不可用，将不带该文件发送消息。",
 };

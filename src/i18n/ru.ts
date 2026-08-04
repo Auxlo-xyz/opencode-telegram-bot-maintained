@@ -658,4 +658,9 @@ export const ru: I18nDictionary = {
   "ls.file.header": "Сведения о файле",
   "ls.file.download": "📥 Скачать",
   "ls.file.back": "⬅️ Назад",
+  "ls.file.attach": "📎 Прикрепить к следующему промпту",
+  "attachment.added": "📎 Прикреплён: {path}\n\nОтправьте сообщение — файл уйдёт вместе с ним.",
+  "attachment.cancel": "❌ Отменить вложение",
+  "attachment.cancelled": "❌ Вложение отменено",
+  "attachment.invalid": "⚠️ Прикреплённый файл больше недоступен. Отправляю сообщение без него.",
 };

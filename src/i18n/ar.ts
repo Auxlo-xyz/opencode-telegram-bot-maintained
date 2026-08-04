@@ -631,4 +631,9 @@ export const ar: I18nDictionary = {
   "ls.file.header": "تفاصيل الملف",
   "ls.file.download": "📥 تنزيل الملف",
   "ls.file.back": "⬅️ رجوع",
+  "ls.file.attach": "📎 إرفاق بالطلب التالي",
+  "attachment.added": "📎 تم الإرفاق: {path}\n\nأرسل رسالتك وسيُرسل الملف معها.",
+  "attachment.cancel": "❌ إلغاء الإرفاق",
+  "attachment.cancelled": "❌ تم إلغاء الإرفاق",
+  "attachment.invalid": "⚠️ الملف المرفق لم يعد متاحًا. سيتم إرسال الرسالة بدونه.",
 };

@@ -8,6 +8,7 @@ import { renameManager } from "../../../src/app/managers/rename-manager.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
 import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
+import { promptAttachment } from "../../../src/app/managers/prompt-attachment-manager.js";
 import type { Question } from "../../../src/app/types/question.js";
 import type { PermissionRequest } from "../../../src/app/types/permission.js";
 import { t } from "../../../src/i18n/index.js";
@@ -189,6 +190,30 @@ describe("bot/commands/abort", () => {
     await abortCommand(ctx as never);
 
     expect(promptQueue.size()).toBe(0);
+  });
+
+  it("drops the pending attachment so it does not ride along on a later prompt", async () => {
+    mocked.currentSession = {
+      id: "session-1",
+      title: "Session",
+      directory: "D:\\Projects\\Repo",
+    };
+    mocked.abortMock.mockResolvedValue({ data: true, error: null });
+    mocked.statusMock.mockResolvedValue({
+      data: { "session-1": { type: "idle" } },
+      error: null,
+    });
+    promptAttachment.set("D:\\Projects\\Repo\\src\\index.ts", "D:\\Projects\\Repo");
+
+    const ctx = {
+      chat: { id: 777 },
+      reply: vi.fn().mockResolvedValue({ message_id: 88 }),
+      api: { editMessageText: vi.fn().mockResolvedValue(undefined) },
+    } as unknown as Context;
+
+    await abortCommand(ctx as never);
+
+    expect(promptAttachment.get()).toBeNull();
   });
 
   it("marks only Aborted session errors for suppression after user abort", async () => {

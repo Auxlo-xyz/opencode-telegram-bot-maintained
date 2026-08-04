@@ -305,6 +305,9 @@ class SummaryAggregator {
   private thinkingFinishedForMessages: Set<string> = new Set();
   private deliveredExternalUserMessageIds: Set<string> = new Set();
   private knownTextPartIds: Map<string, Set<string>> = new Map();
+  // Parts OpenCode injected itself, tracked by id because `message.part.delta` events may
+  // carry only the id and would otherwise stream their content past the synthetic filter.
+  private syntheticPartIds: Map<string, Set<string>> = new Map();
   private bot: Bot | null = null;
   private chatId: number | null = null;
   private typingTimer: ReturnType<typeof setInterval> | null = null;
@@ -540,6 +543,7 @@ class SummaryAggregator {
     this.messages.clear();
     this.partHashes.clear();
     this.knownTextPartIds.clear();
+    this.syntheticPartIds.clear();
     this.processedToolStates.clear();
     this.thinkingFiredForMessages.clear();
     this.thinkingFinishedForMessages.clear();
@@ -1280,6 +1284,15 @@ class SummaryAggregator {
     const messageID = part.messageID;
     const messageInfo = this.messages.get(messageID);
 
+    // OpenCode injects synthetic text parts of its own: expanded file attachments,
+    // MCP resource dumps, plan-mode hints. They are context for the model, never content
+    // for the user - rendering them would echo a whole attached file back into the chat.
+    if (part.type === "text" && "synthetic" in part && part.synthetic === true) {
+      this.registerSyntheticPart(messageID, part.id);
+      this.lastUpdated = Date.now();
+      return;
+    }
+
     if (part.type === "text") {
       this.registerKnownTextPart(messageID, part.id);
       this.registerTextPart(messageID, part.id);
@@ -1484,6 +1497,16 @@ class SummaryAggregator {
     const delta = event.properties.delta;
 
     if (!sessionID || !messageID || typeof delta !== "string" || delta.length === 0) {
+      return;
+    }
+
+    // Same filter as in handleMessagePartUpdated, applied to the streaming path: a delta
+    // event often carries only the part id, so the flag is looked up in the registry too.
+    const isSynthetic =
+      (part as { synthetic?: boolean } | undefined)?.synthetic === true ||
+      (this.syntheticPartIds.get(messageID)?.has(partID) ?? false);
+    if (isSynthetic) {
+      this.registerSyntheticPart(messageID, partID);
       return;
     }
 
@@ -1752,6 +1775,7 @@ class SummaryAggregator {
     this.messages.delete(messageId);
     this.partHashes.delete(messageId);
     this.knownTextPartIds.delete(messageId);
+    this.syntheticPartIds.delete(messageId);
     this.thinkingFiredForMessages.delete(messageId);
     this.thinkingFinishedForMessages.delete(messageId);
 
@@ -1794,6 +1818,14 @@ class SummaryAggregator {
     }
 
     this.knownTextPartIds.get(messageID)!.add(partID);
+  }
+
+  private registerSyntheticPart(messageID: string, partID: string): void {
+    if (!this.syntheticPartIds.has(messageID)) {
+      this.syntheticPartIds.set(messageID, new Set());
+    }
+
+    this.syntheticPartIds.get(messageID)!.add(partID);
   }
 
   private registerTextPart(messageID: string, partID: string): void {

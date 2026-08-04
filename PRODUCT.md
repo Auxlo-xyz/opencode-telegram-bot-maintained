@@ -118,7 +118,7 @@ Current command set:
 - `/opencode_start` - start local OpenCode server
 - `/opencode_stop` - stop local OpenCode server
 - `/help` - show command help
-- `/ls` - interactive file browser for the current project directory
+- `/ls` - interactive file browser for the current project directory; a text file can be attached to the next prompt from its detail view
 
 Model, agent, variant, and context actions are available from the persistent bottom keyboard.
 
@@ -173,6 +173,7 @@ Model picker behavior:
 - [x] `/mcps` command: browse available MCP servers
 - [x] Optional local OpenCode server monitoring with automatic restart
 - [x] Interactive project file browsing and file download from Telegram (`/ls`)
+- [x] Attaching a project file from `/ls` to the next prompt as a native OpenCode file part
 - [x] `/messages` command: browse session messages with revert and fork functionality
 - [x] Optional message queue for text sent while the agent is busy, managed from the bottom keyboard
 

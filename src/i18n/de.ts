@@ -677,4 +677,10 @@ export const de: I18nDictionary = {
   "ls.file.header": "Dateidetails",
   "ls.file.download": "📥 Herunterladen",
   "ls.file.back": "⬅️ Zurück",
+  "ls.file.attach": "📎 An nächsten Prompt anhängen",
+  "attachment.added": "📎 Angehängt: {path}\n\nSende deine Nachricht, dann geht die Datei mit.",
+  "attachment.cancel": "❌ Anhang entfernen",
+  "attachment.cancelled": "❌ Anhang entfernt",
+  "attachment.invalid":
+    "⚠️ Die angehängte Datei ist nicht mehr verfügbar. Die Nachricht wird ohne sie gesendet.",
 };

@@ -676,4 +676,10 @@ export const fr: I18nDictionary = {
   "ls.file.header": "Détails du fichier",
   "ls.file.download": "📥 Télécharger",
   "ls.file.back": "⬅️ Retour",
+  "ls.file.attach": "📎 Joindre au prochain prompt",
+  "attachment.added": "📎 Joint : {path}\n\nEnvoyez votre message et le fichier partira avec.",
+  "attachment.cancel": "❌ Annuler la pièce jointe",
+  "attachment.cancelled": "❌ Pièce jointe annulée",
+  "attachment.invalid":
+    "⚠️ Le fichier joint n'est plus disponible. Envoi du message sans celui-ci.",
 };

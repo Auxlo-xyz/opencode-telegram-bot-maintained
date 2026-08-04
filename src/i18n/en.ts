@@ -649,6 +649,11 @@ export const en = {
   "ls.file.header": "File Details",
   "ls.file.download": "📥 Download",
   "ls.file.back": "⬅️ Back",
+  "ls.file.attach": "📎 Attach to next prompt",
+  "attachment.added": "📎 Attached: {path}\n\nSend your message and the file will go with it.",
+  "attachment.cancel": "❌ Cancel attachment",
+  "attachment.cancelled": "❌ Attachment cancelled",
+  "attachment.invalid": "⚠️ The attached file is no longer available. Sending the message without it.",
 } as const;
 
 export type I18nKey = keyof typeof en;
