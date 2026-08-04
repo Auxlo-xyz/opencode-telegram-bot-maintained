@@ -63,6 +63,7 @@ import {
   prepareThinkingStreamingPayload,
 } from "../messages/thinking-rendering.js";
 import { deliverExternalUserInputNotification } from "../messages/external-user-input-notification.js";
+import { dispatchNextQueuedPrompt } from "../handlers/prompt-queue-dispatch.js";
 import {
   backgroundSessionTracker,
   type BackgroundSessionNotification,
@@ -921,6 +922,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
       } finally {
         foregroundSessionState.markIdle(sessionId);
         await scheduledTaskRuntime.flushDeferredDeliveries();
+        void dispatchNextQueuedPrompt();
       }
     });
 
@@ -976,6 +978,7 @@ class EventSubscriptionService implements BotEventSubscriptionService {
 
       foregroundSessionState.markIdle(sessionId);
       await scheduledTaskRuntime.flushDeferredDeliveries();
+      void dispatchNextQueuedPrompt();
     });
 
     summaryAggregator.setOnSessionRetry(async ({ sessionId, message }) => {

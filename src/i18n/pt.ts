@@ -162,6 +162,7 @@ export const pt: I18nDictionary = {
   "settings.diff_files.label": "Arquivos de diff",
   "settings.assistant_footer.label": "Rodapé do assistente",
   "settings.tts.label": "Respostas em áudio",
+  "settings.prompt_queue.label": "Fila de mensagens",
   "settings.value.on": "Ligado",
   "settings.value.off": "Desligado",
   "settings.saved": "✅ Configuração salva.",
@@ -416,6 +417,14 @@ export const pt: I18nDictionary = {
   "keyboard.context_empty": "📊 0",
   "keyboard.variant": "💭 {name}",
   "keyboard.variant_default": "💡 Padrão",
+  "keyboard.queued_prompt": "❌ {index}. {text}",
+  "queue.added":
+    "📥 Adicionado à fila ({count}/{max}). Será enviado quando a tarefa atual terminar.",
+  "queue.full":
+    "⚠️ A fila está cheia ({max}). Remova uma mensagem ou aguarde o término da tarefa atual.",
+  "queue.removed": "🗑 Mensagem removida da fila.",
+  "queue.not_found": "Esta mensagem não está mais na fila.",
+  "queue.disabled_hint": "A fila de mensagens pode ser ativada em /settings.",
   "keyboard.updated": "⌨️ Teclado atualizado",
 
   "pinned.default_session_title": "nova sessão",

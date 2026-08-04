@@ -162,6 +162,7 @@ export const es: I18nDictionary = {
   "settings.diff_files.label": "Archivos diff",
   "settings.assistant_footer.label": "Pie de respuesta",
   "settings.tts.label": "Respuestas de audio",
+  "settings.prompt_queue.label": "Cola de mensajes",
   "settings.value.on": "Activado",
   "settings.value.off": "Desactivado",
   "settings.saved": "✅ Ajuste guardado.",
@@ -415,6 +416,14 @@ export const es: I18nDictionary = {
   "keyboard.context_empty": "📊 0",
   "keyboard.variant": "💭 {name}",
   "keyboard.variant_default": "💡 Predeterminado",
+  "keyboard.queued_prompt": "❌ {index}. {text}",
+  "queue.added":
+    "📥 Añadido a la cola ({count}/{max}). Se enviará cuando termine la tarea actual.",
+  "queue.full":
+    "⚠️ La cola está llena ({max}). Elimina un mensaje o espera a que termine la tarea actual.",
+  "queue.removed": "🗑 Mensaje eliminado de la cola.",
+  "queue.not_found": "Este mensaje ya no está en la cola.",
+  "queue.disabled_hint": "La cola de mensajes se activa en /settings.",
   "keyboard.updated": "⌨️ Teclado actualizado",
 
   "pinned.default_session_title": "sesión nueva",

@@ -42,6 +42,7 @@ Languages: English (`en`), العربية (`ar`), Deutsch (`de`), Español (`es`
 - **Voice prompts** — send voice/audio messages, transcribe them via a Whisper-compatible API, and optionally enable spoken replies in `/settings`
 - **File attachments** — send images, PDF documents, and text-based files to OpenCode, including multiple files in one Telegram album
 - **Scheduled tasks** — schedule prompts to run later or on a recurring interval; see [Scheduled Tasks](#scheduled-tasks)
+- **Message queue** — enable in `/settings` to hold messages sent while the agent is busy, send them one by one afterwards, and manage them from the bottom keyboard
 - **Context control** — compact context when it gets too large, right from the chat
 - **Input flow control** — when an interactive flow is active, the bot accepts only relevant input to keep context consistent and avoid accidental actions
 - **Git worktree switching** — browse and switch between existing git worktrees for the current repository with `/worktree`
@@ -268,6 +269,9 @@ Runtime preferences are changed from `/settings` and stored in `settings.json`:
 - Diff file attachments
 - Response streaming mode: `edit` or `draft (experimental)`; applies only to final assistant replies, not thinking messages
 - Audio replies: `off`, `all`, or `auto` when TTS is configured
+- Message queue: hold text messages sent while the agent is busy instead of rejecting them
+
+With the message queue enabled, plain text sent while the agent is busy is held (up to 5 messages) instead of being turned down. Queued messages appear as buttons above the usual bottom-keyboard grid — tap one to drop it. They are sent one at a time as each run finishes, and the queue is cleared by `/abort` or a session/project switch.
 
 You can seed the initial defaults for any of these settings without hard-coding them in your Docker image by setting `INITIAL_SETTINGS_PRESET` to a JSON object. Only keys not yet persisted in `settings.json` are affected — settings the user has already changed via `/settings` are left untouched:
 

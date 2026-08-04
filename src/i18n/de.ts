@@ -162,6 +162,7 @@ export const de: I18nDictionary = {
   "settings.diff_files.label": "Diff-Dateien",
   "settings.assistant_footer.label": "Antwort-Footer",
   "settings.tts.label": "Audioantworten",
+  "settings.prompt_queue.label": "Nachrichtenwarteschlange",
   "settings.value.on": "Ein",
   "settings.value.off": "Aus",
   "settings.saved": "✅ Einstellung gespeichert.",
@@ -418,6 +419,14 @@ export const de: I18nDictionary = {
   "keyboard.context_empty": "📊 0",
   "keyboard.variant": "💭 {name}",
   "keyboard.variant_default": "💡 Standard",
+  "keyboard.queued_prompt": "❌ {index}. {text}",
+  "queue.added":
+    "📥 Zur Warteschlange hinzugefügt ({count}/{max}). Die Nachricht wird gesendet, sobald die aktuelle Aufgabe abgeschlossen ist.",
+  "queue.full":
+    "⚠️ Die Warteschlange ist voll ({max}). Entferne eine Nachricht oder warte, bis die aktuelle Aufgabe abgeschlossen ist.",
+  "queue.removed": "🗑 Nachricht aus der Warteschlange entfernt.",
+  "queue.not_found": "Diese Nachricht ist nicht mehr in der Warteschlange.",
+  "queue.disabled_hint": "Die Nachrichtenwarteschlange lässt sich in /settings aktivieren.",
   "keyboard.updated": "⌨️ Tastatur aktualisiert",
 
   "pinned.default_session_title": "neue Sitzung",

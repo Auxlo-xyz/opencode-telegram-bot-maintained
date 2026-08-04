@@ -7,6 +7,7 @@ import { permissionManager } from "../../../src/app/managers/permission-manager.
 import { renameManager } from "../../../src/app/managers/rename-manager.js";
 import { interactionManager } from "../../../src/app/managers/interaction-manager.js";
 import { foregroundSessionState } from "../../../src/app/managers/foreground-session-state-manager.js";
+import { promptQueue } from "../../../src/app/managers/prompt-queue-manager.js";
 import type { Question } from "../../../src/app/types/question.js";
 import type { PermissionRequest } from "../../../src/app/types/permission.js";
 import { t } from "../../../src/i18n/index.js";
@@ -164,6 +165,30 @@ describe("bot/commands/abort", () => {
     expect(interactionManager.getSnapshot()).toBeNull();
     expectAbortStateReleased("abort_confirmed");
     expect(shouldSuppressUserAbortSessionError("session-1", "Aborted")).toBe(true);
+  });
+
+  it("drops queued prompts so they do not run after the abort", async () => {
+    mocked.currentSession = {
+      id: "session-1",
+      title: "Session",
+      directory: "D:\\Projects\\Repo",
+    };
+    mocked.abortMock.mockResolvedValue({ data: true, error: null });
+    mocked.statusMock.mockResolvedValue({
+      data: { "session-1": { type: "idle" } },
+      error: null,
+    });
+    promptQueue.add("queued while running");
+
+    const ctx = {
+      chat: { id: 777 },
+      reply: vi.fn().mockResolvedValue({ message_id: 88 }),
+      api: { editMessageText: vi.fn().mockResolvedValue(undefined) },
+    } as unknown as Context;
+
+    await abortCommand(ctx as never);
+
+    expect(promptQueue.size()).toBe(0);
   });
 
   it("marks only Aborted session errors for suppression after user abort", async () => {

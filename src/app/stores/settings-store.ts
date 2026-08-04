@@ -230,6 +230,15 @@ export function setSendDiffFileAttachments(enabled: boolean): void {
   void writeSettingsFile(currentSettings);
 }
 
+export function getPromptQueueEnabled(): boolean {
+  return currentSettings.promptQueueEnabled ?? false;
+}
+
+export function setPromptQueueEnabled(enabled: boolean): void {
+  currentSettings.promptQueueEnabled = enabled;
+  void writeSettingsFile(currentSettings);
+}
+
 export function getCurrentAgent(): string | undefined {
   return currentSettings.currentAgent;
 }
@@ -323,6 +332,7 @@ function applyInitialSettingsPreset(preset: Record<string, unknown>): void {
     "showAssistantRunFooter",
     "responseStreamingMode",
     "sendDiffFileAttachments",
+    "promptQueueEnabled",
   ]);
 
   for (const [key, value] of Object.entries(preset)) {
@@ -353,7 +363,7 @@ function applyInitialSettingsPreset(preset: Record<string, unknown>): void {
         currentSettings.responseStreamingMode = value as ResponseStreamingMode;
       }
     } else {
-      // Boolean settings: compactOutputMode, showThinkingContent, showAssistantRunFooter, sendDiffFileAttachments
+      // Boolean settings: compactOutputMode, showThinkingContent, showAssistantRunFooter, sendDiffFileAttachments, promptQueueEnabled
       if (typeof value !== "boolean") {
         throw new Error(
           `INITIAL_SETTINGS_PRESET: "${key}" must be a boolean.`,
@@ -375,6 +385,10 @@ function applyInitialSettingsPreset(preset: Record<string, unknown>): void {
         case "sendDiffFileAttachments":
           if (currentSettings.sendDiffFileAttachments === undefined)
             currentSettings.sendDiffFileAttachments = value;
+          break;
+        case "promptQueueEnabled":
+          if (currentSettings.promptQueueEnabled === undefined)
+            currentSettings.promptQueueEnabled = value;
           break;
       }
     }

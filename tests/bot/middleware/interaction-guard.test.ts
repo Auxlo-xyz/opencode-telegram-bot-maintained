@@ -274,10 +274,24 @@ describe("interactionGuardMiddleware", () => {
     expect(ctx.reply).toHaveBeenCalledWith(t("bot.session_busy"));
   });
 
-  it("blocks plain text while busy with generic blocked message", async () => {
+  it("blocks plain text while busy and suggests the queue when it is disabled", async () => {
     foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
 
     const ctx = createTextContext("hello");
+    const next: NextFunction = vi.fn().mockResolvedValue(undefined);
+
+    await interactionGuardMiddleware(ctx, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      `${t("bot.session_busy")} ${t("queue.disabled_hint")}`,
+    );
+  });
+
+  it("does not suggest the queue for a reply keyboard button pressed while busy", async () => {
+    foregroundSessionState.markBusy("session-1", "D:\\Projects\\Repo");
+
+    const ctx = createTextContext("🧠 openrouter\nopenai/gpt-4o");
     const next: NextFunction = vi.fn().mockResolvedValue(undefined);
 
     await interactionGuardMiddleware(ctx, next);
@@ -312,7 +326,7 @@ describe("interactionGuardMiddleware", () => {
 
     expect(mocked.reconcileForegroundBusyStateMock).toHaveBeenCalledTimes(1);
     expect(next).not.toHaveBeenCalled();
-    expect(ctx.reply).toHaveBeenCalledWith(t("bot.session_busy"));
+    expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining(t("bot.session_busy")));
   });
 
   it("blocks callback while busy without active question or permission", async () => {

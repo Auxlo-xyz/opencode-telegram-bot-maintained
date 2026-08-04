@@ -57,6 +57,8 @@ export async function resetSingletonState(): Promise<void> {
     { stopEventListening },
     { __resetSessionDirectoryCacheForTests },
     { __resetMessageMergerForTests },
+    { promptQueue },
+    { __resetPromptQueueDispatchForTests },
     loggerModule,
   ] = await Promise.all([
     import("../../src/app/managers/question-manager.js"),
@@ -69,6 +71,8 @@ export async function resetSingletonState(): Promise<void> {
     import("../../src/opencode/events.js"),
     import("../../src/app/services/session-cache-service.js"),
     import("../../src/bot/handlers/message-merger.js"),
+    import("../../src/app/managers/prompt-queue-manager.js"),
+    import("../../src/bot/handlers/prompt-queue-dispatch.js"),
     import("../../src/utils/logger.js"),
   ]);
 
@@ -79,6 +83,8 @@ export async function resetSingletonState(): Promise<void> {
   interactionManager.clear("test_reset");
   summaryAggregator.clear();
   __resetMessageMergerForTests();
+  promptQueue.__resetForTests();
+  __resetPromptQueueDispatchForTests();
 
   const aggregator = summaryAggregator as unknown as SummaryAggregatorPrivateState;
   aggregator.onCompleteCallback = null;

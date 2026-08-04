@@ -8,6 +8,7 @@ import {
   __resetSettingsForTests,
   flushSettings,
   getCompactOutputMode,
+  getPromptQueueEnabled,
   getResponseStreamingMode,
   getSendDiffFileAttachments,
   getShowAssistantRunFooter,
@@ -16,6 +17,7 @@ import {
   getTtsMode,
   loadSettings,
   setCompactOutputMode,
+  setPromptQueueEnabled,
   setScheduledTasks,
   setResponseStreamingMode,
   setSendDiffFileAttachments,
@@ -83,11 +85,28 @@ describe("app/stores/settings-store", () => {
     expect(getShowAssistantRunFooter()).toBe(true);
   });
 
+  it("disables the prompt queue by default", async () => {
+    await loadSettings();
+
+    expect(getPromptQueueEnabled()).toBe(false);
+  });
+
+  it("loads the prompt queue setting from settings.json", async () => {
+    await writeFile(
+      path.join(tempHome, "settings.json"),
+      JSON.stringify({ promptQueueEnabled: true }),
+    );
+
+    await loadSettings();
+
+    expect(getPromptQueueEnabled()).toBe(true);
+  });
+
   it("applies INITIAL_SETTINGS_PRESET for settings not yet persisted", async () => {
     vi.resetModules();
     vi.stubEnv(
       "INITIAL_SETTINGS_PRESET",
-      '{"showAssistantRunFooter":false,"compactOutputMode":true,"ttsMode":"auto","responseStreamingMode":"draft","sendDiffFileAttachments":false,"showThinkingContent":false}',
+      '{"showAssistantRunFooter":false,"compactOutputMode":true,"ttsMode":"auto","responseStreamingMode":"draft","sendDiffFileAttachments":false,"showThinkingContent":false,"promptQueueEnabled":true}',
     );
 
     const store = await import("../../../src/app/stores/settings-store.js");
@@ -99,6 +118,7 @@ describe("app/stores/settings-store", () => {
     expect(store.getResponseStreamingMode()).toBe("draft");
     expect(store.getSendDiffFileAttachments()).toBe(false);
     expect(store.getShowThinkingContent()).toBe(false);
+    expect(store.getPromptQueueEnabled()).toBe(true);
 
     vi.unstubAllEnvs();
     vi.resetModules();
@@ -239,6 +259,18 @@ describe("app/stores/settings-store", () => {
     await vi.waitFor(async () => {
       const settings = JSON.parse(await readFile(path.join(tempHome, "settings.json"), "utf-8"));
       expect(settings.sendDiffFileAttachments).toBe(false);
+    });
+  });
+
+  it("persists the prompt queue setting to settings.json", async () => {
+    await loadSettings();
+
+    setPromptQueueEnabled(true);
+
+    expect(getPromptQueueEnabled()).toBe(true);
+    await vi.waitFor(async () => {
+      const settings = JSON.parse(await readFile(path.join(tempHome, "settings.json"), "utf-8"));
+      expect(settings.promptQueueEnabled).toBe(true);
     });
   });
 
