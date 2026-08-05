@@ -25,26 +25,6 @@ interface KeyboardManagerPrivateState {
   lastUpdateTime: number;
 }
 
-interface PinnedMessageManagerPrivateState {
-  api: null;
-  chatId: null;
-  contextLimit: null;
-  updateDebounceTimer: ReturnType<typeof setTimeout> | null;
-  onKeyboardUpdateCallback: undefined;
-  state: {
-    messageId: null;
-    chatId: null;
-    sessionId: null;
-    sessionTitle: string;
-    projectName: string;
-    projectBranch: string | null;
-    tokensUsed: number;
-    tokensLimit: number;
-    lastUpdated: number;
-    changedFiles: Array<{ file: string; additions: number; deletions: number }>;
-  };
-}
-
 export async function resetSingletonState(): Promise<void> {
   const [
     { questionManager },
@@ -114,27 +94,11 @@ export async function resetSingletonState(): Promise<void> {
   keyboard.chatId = null;
   keyboard.lastUpdateTime = 0;
 
-  const pinned = pinnedMessageManager as unknown as PinnedMessageManagerPrivateState;
-  if (pinned.updateDebounceTimer) {
-    clearTimeout(pinned.updateDebounceTimer);
+  // Test files that mock the pinned manager module supply their own stub,
+  // which has nothing to reset.
+  if (typeof pinnedMessageManager.__resetForTests === "function") {
+    pinnedMessageManager.__resetForTests();
   }
-  pinned.updateDebounceTimer = null;
-  pinned.api = null;
-  pinned.chatId = null;
-  pinned.contextLimit = null;
-  pinned.onKeyboardUpdateCallback = undefined;
-  pinned.state = {
-    messageId: null,
-    chatId: null,
-    sessionId: null,
-    sessionTitle: "new session",
-    projectName: "",
-    projectBranch: null,
-    tokensUsed: 0,
-    tokensLimit: 0,
-    lastUpdated: 0,
-    changedFiles: [],
-  };
 
   __resetSessionDirectoryCacheForTests();
 

@@ -5,6 +5,8 @@ const mocked = vi.hoisted(() => ({
     session: {
       list: vi.fn().mockResolvedValue({ data: [] }),
       messages: vi.fn().mockResolvedValue({ data: [] }),
+      diff: vi.fn().mockResolvedValue({ data: [] }),
+      get: vi.fn().mockResolvedValue({ data: null }),
     },
     config: { get: vi.fn().mockResolvedValue({ data: {} }) },
   },
@@ -33,6 +35,7 @@ vi.mock("../../../src/app/stores/settings-store.js", () => ({
 }));
 vi.mock("../../../src/app/services/model-selection-service.js", () => ({ getStoredModel: mocked.getStoredModel }));
 vi.mock("../../../src/app/services/model-context-limit-service.js", () => ({
+  DEFAULT_CONTEXT_LIMIT: 204800,
   getModelContextLimit: mocked.getModelContextLimit,
 }));
 vi.mock("../../../src/i18n/index.js", async (importOriginal) => {
@@ -87,6 +90,8 @@ describe("pinned/manager", () => {
     mocked.getModelContextLimit.mockResolvedValue(204800);
     mocked.getPinnedMessageId.mockReturnValue(null);
     mocked.opencodeClient.session.messages.mockResolvedValue({ data: [] });
+    mocked.opencodeClient.session.diff.mockResolvedValue({ data: [] });
+    mocked.opencodeClient.session.get.mockResolvedValue({ data: null });
     mocked.getGitWorktreeContext.mockResolvedValue({
       mainProjectPath: "D:/repo",
       activeWorktreePath: "D:/repo",
@@ -318,6 +323,516 @@ describe("pinned/manager", () => {
       // Should fire with tokensUsed = 3000 + 500 = 3500
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(3500, 204800);
+    });
+  });
+
+  describe("addFileChange debouncing", () => {
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    });
+
+    it("coalesces rapid file changes into a single pinned update", async () => {
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/a.ts", additions: 1, deletions: 0 });
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/b.ts", additions: 2, deletions: 1 });
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/c.ts", additions: 3, deletions: 0 });
+
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+      const text = String(fakeApi.editMessageText.mock.calls[0][2]);
+      expect(text).toContain("src/a.ts (+1)");
+      expect(text).toContain("src/b.ts (+2 -1)");
+      expect(text).toContain("src/c.ts (+3)");
+    });
+
+    it("restarts the debounce window on every new file change", async () => {
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/a.ts", additions: 1, deletions: 0 });
+      await vi.advanceTimersByTimeAsync(900);
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/b.ts", additions: 1, deletions: 0 });
+      await vi.advanceTimersByTimeAsync(900);
+
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+    });
+
+    it("accumulates additions and deletions for the same file", async () => {
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/a.ts", additions: 1, deletions: 2 });
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/a.ts", additions: 4, deletions: 1 });
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(pinnedMessageManager.getState().changedFiles).toEqual([
+        { file: "D:/repo/src/a.ts", additions: 5, deletions: 3 },
+      ]);
+      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("src/a.ts (+5 -3)");
+    });
+  });
+
+  describe("flushPendingPinnedUpdates", () => {
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+    });
+
+    it("merges updates requested while an edit is in flight into one follow-up edit", async () => {
+      let releaseFirstEdit: () => void = () => {};
+      const firstEditGate = new Promise<void>((resolve) => {
+        releaseFirstEdit = resolve;
+      });
+      fakeApi.editMessageText.mockImplementationOnce(() => firstEditGate);
+
+      const first = pinnedMessageManager.onCostUpdate(1);
+      const second = pinnedMessageManager.onCostUpdate(2);
+      const third = pinnedMessageManager.onCostUpdate(3);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("$1.00");
+
+      releaseFirstEdit();
+      await Promise.all([first, second, third]);
+
+      // The two updates that arrived during the first edit collapse into a
+      // single trailing edit carrying the latest state.
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
+      expect(String(fakeApi.editMessageText.mock.calls[1][2])).toContain("$6.00");
+    });
+
+    it("skips a non-forced update when the rendered text did not change", async () => {
+      const tokens = { input: 100, output: 10, reasoning: 0, cacheRead: 0, cacheWrite: 0 };
+
+      await pinnedMessageManager.onMessageComplete(tokens);
+      await pinnedMessageManager.onMessageComplete(tokens);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+    });
+
+    it("edits the message on refresh() even when the text did not change", async () => {
+      await pinnedMessageManager.refresh();
+      await pinnedMessageManager.refresh();
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("pinned message edit errors", () => {
+    const tokens = { input: 100, output: 10, reasoning: 0, cacheRead: 0, cacheWrite: 0 };
+
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+      fakeApi.sendMessage.mockClear();
+      mocked.setPinnedMessageId.mockClear();
+      mocked.clearPinnedMessageId.mockClear();
+    });
+
+    it("treats 'message is not modified' as delivered and skips the identical retry", async () => {
+      fakeApi.editMessageText.mockRejectedValueOnce(
+        new Error("Bad Request: message is not modified"),
+      );
+
+      await pinnedMessageManager.onMessageComplete(tokens);
+      await pinnedMessageManager.onMessageComplete(tokens);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries the same text after an unexpected edit failure", async () => {
+      fakeApi.editMessageText.mockRejectedValueOnce(new Error("Bad Request: chat not found"));
+
+      await pinnedMessageManager.onMessageComplete(tokens);
+      await pinnedMessageManager.onMessageComplete(tokens);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
+    });
+
+    it("recreates the pinned message when Telegram reports it was deleted", async () => {
+      fakeApi.editMessageText.mockRejectedValueOnce(
+        new Error("Bad Request: message to edit not found"),
+      );
+      fakeApi.sendMessage.mockResolvedValue({ message_id: 1001 });
+
+      await pinnedMessageManager.onMessageComplete(tokens);
+
+      expect(mocked.clearPinnedMessageId).toHaveBeenCalledTimes(1);
+      expect(fakeApi.sendMessage).toHaveBeenCalledTimes(1);
+      expect(mocked.setPinnedMessageId).toHaveBeenCalledWith(1001);
+      expect(fakeApi.pinChatMessage).toHaveBeenCalledWith(123, 1001, {
+        disable_notification: true,
+      });
+      expect(pinnedMessageManager.getState().messageId).toBe(1001);
+    });
+  });
+
+  describe("loading file diffs on session change", () => {
+    it("uses session.diff() results and ignores entries without a file", async () => {
+      mocked.opencodeClient.session.diff.mockResolvedValue({
+        data: [
+          { file: "D:/repo/src/a.ts", additions: 3, deletions: 1 },
+          { additions: 9, deletions: 9 },
+          { file: "D:/repo/src/b.ts", additions: 0, deletions: 2 },
+        ],
+      });
+
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+
+      expect(pinnedMessageManager.getState().changedFiles).toEqual([
+        { file: "D:/repo/src/a.ts", additions: 3, deletions: 1 },
+        { file: "D:/repo/src/b.ts", additions: 0, deletions: 2 },
+      ]);
+      expect(mocked.opencodeClient.session.messages).not.toHaveBeenCalled();
+      expect(fakeApi.editMessageText).toHaveBeenCalledWith(
+        123,
+        999,
+        expect.stringContaining("src/a.ts (+3 -1)"),
+      );
+    });
+
+    it("falls back to tool parts from session messages when session.diff() is empty", async () => {
+      mocked.opencodeClient.session.messages.mockResolvedValue({
+        data: [
+          {
+            info: { role: "assistant" },
+            parts: [
+              {
+                type: "tool",
+                tool: "edit",
+                state: {
+                  status: "completed",
+                  metadata: { filediff: { file: "D:/repo/src/a.ts", additions: 2, deletions: 1 } },
+                },
+              },
+              {
+                type: "tool",
+                tool: "apply_patch",
+                state: {
+                  status: "completed",
+                  metadata: { filediff: { file: "D:/repo/src/a.ts", additions: 3, deletions: 0 } },
+                },
+              },
+              {
+                type: "tool",
+                tool: "write",
+                state: {
+                  status: "completed",
+                  input: { filePath: "D:/repo/src/b.ts", content: "one\ntwo\nthree" },
+                },
+              },
+              {
+                type: "tool",
+                tool: "bash",
+                state: { status: "completed", input: { command: "npm test" } },
+              },
+              {
+                type: "tool",
+                tool: "edit",
+                state: {
+                  status: "running",
+                  metadata: {
+                    filediff: { file: "D:/repo/src/pending.ts", additions: 5, deletions: 5 },
+                  },
+                },
+              },
+              { type: "text", text: "done" },
+            ],
+          },
+        ],
+      });
+
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+
+      expect(pinnedMessageManager.getState().changedFiles).toEqual([
+        { file: "D:/repo/src/a.ts", additions: 5, deletions: 1 },
+        { file: "D:/repo/src/b.ts", additions: 3, deletions: 0 },
+      ]);
+    });
+
+    it("leaves the diff list empty when neither source reports file changes", async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+
+      expect(mocked.opencodeClient.session.messages).toHaveBeenCalledTimes(1);
+      expect(pinnedMessageManager.getState().changedFiles).toEqual([]);
+    });
+
+    it("does not call the diff API when no project is selected", async () => {
+      mocked.getCurrentProject.mockReturnValue(null);
+
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+
+      expect(mocked.opencodeClient.session.diff).not.toHaveBeenCalled();
+      expect(mocked.opencodeClient.session.messages).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("onSessionDiff", () => {
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+    });
+
+    it("ignores an empty diff when tool events already collected file changes", async () => {
+      pinnedMessageManager.addFileChange({ file: "D:/repo/src/a.ts", additions: 1, deletions: 0 });
+
+      await pinnedMessageManager.onSessionDiff([]);
+
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+      expect(pinnedMessageManager.getState().changedFiles).toHaveLength(1);
+    });
+
+    it("ignores a diff identical to the current one", async () => {
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
+      ]);
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
+      ]);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+    });
+
+    it("applies a diff that changes the line counts of the same file", async () => {
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
+      ]);
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 2, deletions: 0 },
+      ]);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
+      expect(String(fakeApi.editMessageText.mock.calls[1][2])).toContain("src/a.ts (+2)");
+    });
+  });
+
+  describe("restoreExistingSession", () => {
+    beforeEach(() => {
+      mocked.getPinnedMessageId.mockReturnValue(777);
+      pinnedMessageManager.initialize(fakeApi as never, 123);
+    });
+
+    it("edits the persisted pinned message instead of creating a new one", async () => {
+      await pinnedMessageManager.restoreExistingSession("ses-1", "Restored session");
+
+      expect(fakeApi.sendMessage).not.toHaveBeenCalled();
+      expect(fakeApi.editMessageText).toHaveBeenCalledWith(
+        123,
+        777,
+        expect.stringContaining("Restored session"),
+      );
+      expect(pinnedMessageManager.getState().messageId).toBe(777);
+    });
+
+    it("restores the file diffs of the session it reattaches to", async () => {
+      mocked.opencodeClient.session.diff.mockResolvedValue({
+        data: [{ file: "D:/repo/src/a.ts", additions: 4, deletions: 0 }],
+      });
+
+      await pinnedMessageManager.restoreExistingSession("ses-1", "Restored session");
+
+      expect(pinnedMessageManager.getState().changedFiles).toEqual([
+        { file: "D:/repo/src/a.ts", additions: 4, deletions: 0 },
+      ]);
+      expect(fakeApi.editMessageText).toHaveBeenLastCalledWith(
+        123,
+        777,
+        expect.stringContaining("src/a.ts (+4)"),
+      );
+    });
+  });
+
+  describe("context limit", () => {
+    it("reports no context info until a limit is known", () => {
+      expect(pinnedMessageManager.getContextInfo()).toBeNull();
+      expect(pinnedMessageManager.getContextLimit()).toBe(0);
+    });
+
+    it("fetches the limit lazily when a message completes without one", async () => {
+      await pinnedMessageManager.onMessageComplete({
+        input: 100,
+        output: 10,
+        reasoning: 0,
+        cacheRead: 50,
+        cacheWrite: 0,
+      });
+
+      expect(mocked.getModelContextLimit).toHaveBeenCalledTimes(1);
+      expect(pinnedMessageManager.getContextInfo()).toEqual({
+        tokensUsed: 150,
+        tokensLimit: 204800,
+      });
+    });
+
+    it("re-reads the limit after a model change", async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      mocked.getModelContextLimit.mockResolvedValue(1_000_000);
+
+      await pinnedMessageManager.refreshContextLimit();
+
+      expect(pinnedMessageManager.getContextLimit()).toBe(1_000_000);
+    });
+
+    it("falls back to the default limit when the model lookup fails", async () => {
+      mocked.getModelContextLimit.mockRejectedValue(new Error("model registry unavailable"));
+
+      await pinnedMessageManager.refreshContextLimit();
+
+      expect(pinnedMessageManager.getContextLimit()).toBe(204800);
+    });
+  });
+
+  describe("incremental state updates", () => {
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+    });
+
+    it("updates the pinned message only for a new non-empty session title", async () => {
+      await pinnedMessageManager.onSessionTitleUpdate("Test Session");
+      await pinnedMessageManager.onSessionTitleUpdate("");
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+
+      await pinnedMessageManager.onSessionTitleUpdate("Renamed session");
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain("Renamed session");
+    });
+
+    it("drops the busy flag as soon as the session is detached", async () => {
+      await pinnedMessageManager.setAttachState(true, true);
+      expect(pinnedMessageManager.getState()).toMatchObject({
+        attachActive: true,
+        attachBusy: true,
+      });
+
+      await pinnedMessageManager.setAttachState(false, true);
+
+      expect(pinnedMessageManager.getState()).toMatchObject({
+        attachActive: false,
+        attachBusy: false,
+      });
+    });
+
+    it("ignores cost updates that cannot change the total", async () => {
+      await pinnedMessageManager.onCostUpdate(0);
+      await pinnedMessageManager.onCostUpdate(Number.NaN);
+
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+    });
+
+    it("reloads context from history after a compaction", async () => {
+      mocked.opencodeClient.session.messages.mockResolvedValue({
+        data: [
+          {
+            info: {
+              role: "assistant",
+              time: { created: 100 },
+              tokens: { input: 700, cache: { read: 300 } },
+              cost: 0.3,
+            },
+            parts: [],
+          },
+        ],
+      });
+
+      await pinnedMessageManager.onSessionCompacted("ses-1", "D:/repo");
+
+      expect(pinnedMessageManager.getState().tokensUsed).toBe(1000);
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the current context when the history request fails", async () => {
+      pinnedMessageManager.updateTokensSilent({
+        input: 400,
+        output: 0,
+        reasoning: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+      });
+      mocked.opencodeClient.session.messages.mockResolvedValue({ error: { message: "boom" } });
+
+      await pinnedMessageManager.loadContextFromHistory("ses-1", "D:/repo");
+
+      expect(pinnedMessageManager.getState().tokensUsed).toBe(400);
+      expect(fakeApi.editMessageText).not.toHaveBeenCalled();
+    });
+
+    it("notifies the keyboard callback after a successful edit", async () => {
+      const callback = vi.fn();
+      pinnedMessageManager.setOnKeyboardUpdate(callback);
+      callback.mockClear();
+
+      await pinnedMessageManager.refresh();
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(callback).toHaveBeenCalledWith(0, 204800);
+    });
+  });
+
+  describe("changed files rendering", () => {
+    beforeEach(async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.editMessageText.mockClear();
+    });
+
+    it("lists at most ten files and reports the rest as a count", async () => {
+      await pinnedMessageManager.onSessionDiff(
+        Array.from({ length: 12 }, (_, index) => ({
+          file: `D:/repo/src/file-${index}.ts`,
+          additions: 1,
+          deletions: 0,
+        })),
+      );
+
+      const text = String(fakeApi.editMessageText.mock.calls[0][2]);
+      expect(text).toContain("Files (12):");
+      expect(text).toContain("src/file-9.ts");
+      expect(text).not.toContain("src/file-10.ts");
+      expect(text).toContain("... and 2 more");
+    });
+
+    it("shortens paths that live outside the current project", async () => {
+      await pinnedMessageManager.onSessionDiff([
+        { file: "C:/other/deep/nested/path/file.ts", additions: 1, deletions: 0 },
+      ]);
+
+      expect(String(fakeApi.editMessageText.mock.calls[0][2])).toContain(".../nested/path/file.ts");
+    });
+  });
+
+  describe("clear", () => {
+    it("unpins the message and drops the session state", async () => {
+      await pinnedMessageManager.onSessionChange("ses-1", "Test Session");
+      fakeApi.unpinAllChatMessages.mockClear();
+      mocked.clearPinnedMessageId.mockClear();
+
+      await pinnedMessageManager.clear();
+
+      expect(fakeApi.unpinAllChatMessages).toHaveBeenCalledWith(123);
+      expect(mocked.clearPinnedMessageId).toHaveBeenCalledTimes(1);
+      expect(pinnedMessageManager.getState()).toMatchObject({
+        messageId: null,
+        sessionId: null,
+        sessionTitle: "new session",
+        tokensUsed: 0,
+        tokensLimit: 0,
+        changedFiles: [],
+      });
+    });
+
+    it("resets state without touching Telegram when not initialized", async () => {
+      pinnedMessageManager.__resetForTests();
+      fakeApi.unpinAllChatMessages.mockClear();
+
+      await pinnedMessageManager.clear();
+
+      expect(pinnedMessageManager.isInitialized()).toBe(false);
+      expect(fakeApi.unpinAllChatMessages).not.toHaveBeenCalled();
+      expect(mocked.clearPinnedMessageId).toHaveBeenCalledTimes(1);
     });
   });
 });
