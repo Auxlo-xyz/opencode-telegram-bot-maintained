@@ -130,7 +130,11 @@ export interface SubagentInfo {
   currentTool?: string;
   currentToolInput?: { [key: string]: unknown };
   currentToolTitle?: string;
+  currentToolCallId?: string;
+  currentToolStartedAt?: number;
   terminalMessage?: string;
+  createdAt: number;
+  finishedAt?: number;
   updatedAt: number;
 }
 
@@ -181,7 +185,6 @@ interface SubagentState extends SubagentInfo {
   hasSubtaskMetadata: boolean;
   hasTaskToolMetadata: boolean;
   hasSessionTitleMetadata: boolean;
-  createdAt: number;
 }
 
 // When a model returns a response without a text block, the upstream provider
@@ -649,7 +652,11 @@ class SummaryAggregator {
         currentTool: state.currentTool,
         currentToolInput: state.currentToolInput ? { ...state.currentToolInput } : undefined,
         currentToolTitle: state.currentToolTitle,
+        currentToolCallId: state.currentToolCallId,
+        currentToolStartedAt: state.currentToolStartedAt,
         terminalMessage: state.terminalMessage,
+        createdAt: state.createdAt,
+        finishedAt: state.finishedAt,
         updatedAt: state.updatedAt,
       }));
 
@@ -670,7 +677,10 @@ class SummaryAggregator {
         currentTool: subagent.currentTool,
         currentToolInput: normalizeSnapshotValue(subagent.currentToolInput),
         currentToolTitle: subagent.currentToolTitle,
+        currentToolCallId: subagent.currentToolCallId,
+        currentToolStartedAt: subagent.currentToolStartedAt,
         terminalMessage: subagent.terminalMessage,
+        finishedAt: subagent.finishedAt,
       })),
     );
 
@@ -992,6 +1002,7 @@ class SummaryAggregator {
     sessionId: string,
     state: ToolState,
     tool: string,
+    callId: string,
     input?: { [key: string]: unknown },
     title?: string,
   ): void {
@@ -1006,6 +1017,11 @@ class SummaryAggregator {
     if (status === "pending" && subagent.status === "pending") {
       subagent.status = "pending";
       subagent.terminalMessage = undefined;
+    }
+
+    if (callId && subagent.currentToolCallId !== callId) {
+      subagent.currentToolCallId = callId;
+      subagent.currentToolStartedAt = Date.now();
     }
 
     subagent.currentTool = tool;
@@ -1074,7 +1090,12 @@ class SummaryAggregator {
     subagent.currentTool = undefined;
     subagent.currentToolInput = undefined;
     subagent.currentToolTitle = undefined;
+    subagent.currentToolCallId = undefined;
+    subagent.currentToolStartedAt = undefined;
     subagent.terminalMessage = terminalMessage?.trim() || undefined;
+    // Frozen on purpose: the card is re-rendered on a heartbeat, so a duration
+    // derived from the current time would keep growing after the run ended.
+    subagent.finishedAt = Date.now();
     subagent.updatedAt = Date.now();
     this.emitSubagentState();
   }
@@ -1266,7 +1287,7 @@ class SummaryAggregator {
         const state = part.state;
         const input = "input" in state ? (state.input as { [key: string]: unknown }) : undefined;
         const title = "title" in state ? state.title : undefined;
-        this.updateSubagentToolState(part.sessionID, state, part.tool, input, title);
+        this.updateSubagentToolState(part.sessionID, state, part.tool, part.callID, input, title);
       }
 
       if (part.type === "step-start") {

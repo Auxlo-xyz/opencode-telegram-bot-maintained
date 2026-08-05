@@ -311,6 +311,132 @@ describe("summary/aggregator", () => {
     ]);
   });
 
+  describe("subagent current tool timing", () => {
+    function startSubagent(): void {
+      summaryAggregator.setSession("root-session");
+
+      summaryAggregator.processEvent({
+        type: "message.part.updated",
+        properties: {
+          part: {
+            id: "subtask-1",
+            sessionID: "root-session",
+            messageID: "root-message",
+            type: "subtask",
+            prompt: "Inspect pinned manager",
+            description: "task description",
+            agent: "explore",
+            command: "inspect",
+          },
+        },
+      } as unknown as Event);
+
+      summaryAggregator.processEvent({
+        type: "session.created",
+        properties: {
+          info: {
+            id: "child-session-1",
+            parentID: "root-session",
+            title: "task description (@explore subagent)",
+            slug: "child",
+            directory: "D:/repo",
+            projectID: "p1",
+            version: "1",
+            time: { created: Date.now(), updated: Date.now() },
+          },
+        },
+      } as unknown as Event);
+    }
+
+    function emitChildTool(callID: string): void {
+      summaryAggregator.processEvent({
+        type: "message.part.updated",
+        properties: {
+          part: {
+            id: `child-tool-${callID}`,
+            sessionID: "child-session-1",
+            messageID: "child-message-1",
+            type: "tool",
+            callID,
+            tool: "bash",
+            state: {
+              status: "running",
+              input: { command: "npm test" },
+              title: "Running tests",
+              metadata: {},
+              time: { start: Date.now() },
+            },
+          },
+        },
+      } as unknown as Event);
+    }
+
+    it("reports the current tool call id and its start time", () => {
+      const onSubagent = vi.fn();
+      summaryAggregator.setOnSubagent(onSubagent);
+      startSubagent();
+
+      emitChildTool("call-1");
+
+      expect(onSubagent.mock.lastCall?.[1]).toEqual([
+        expect.objectContaining({
+          currentTool: "bash",
+          currentToolCallId: "call-1",
+          currentToolStartedAt: expect.any(Number),
+        }),
+      ]);
+    });
+
+    it("does not re-emit while the same call keeps reporting", () => {
+      const onSubagent = vi.fn();
+      summaryAggregator.setOnSubagent(onSubagent);
+      startSubagent();
+
+      emitChildTool("call-1");
+      const callsAfterFirst = onSubagent.mock.calls.length;
+      emitChildTool("call-1");
+
+      expect(onSubagent.mock.calls).toHaveLength(callsAfterFirst);
+    });
+
+    it("stamps finishedAt when the subagent session goes idle", () => {
+      const onSubagent = vi.fn();
+      summaryAggregator.setOnSubagent(onSubagent);
+      startSubagent();
+      emitChildTool("call-1");
+
+      summaryAggregator.processEvent({
+        type: "session.idle",
+        properties: { sessionID: "child-session-1" },
+      } as unknown as Event);
+
+      const card = onSubagent.mock.lastCall?.[1][0];
+      expect(card.status).toBe("completed");
+      expect(card.finishedAt).toEqual(expect.any(Number));
+      expect(card.finishedAt).toBeGreaterThanOrEqual(card.createdAt);
+      expect(card.currentToolStartedAt).toBeUndefined();
+    });
+
+    it("re-emits and restarts timing for an identical tool with a new call id", async () => {
+      const onSubagent = vi.fn();
+      summaryAggregator.setOnSubagent(onSubagent);
+      startSubagent();
+
+      emitChildTool("call-1");
+      const firstStartedAt = onSubagent.mock.lastCall?.[1][0].currentToolStartedAt as number;
+      const callsAfterFirst = onSubagent.mock.calls.length;
+
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      emitChildTool("call-2");
+
+      expect(onSubagent.mock.calls.length).toBeGreaterThan(callsAfterFirst);
+      expect(onSubagent.mock.lastCall?.[1][0].currentToolCallId).toBe("call-2");
+      expect(
+        onSubagent.mock.lastCall?.[1][0].currentToolStartedAt as number,
+      ).toBeGreaterThan(firstStartedAt);
+    });
+  });
+
   it("attaches unknown child session events to pending subagent cards before session.created", () => {
     const onSubagent = vi.fn();
     summaryAggregator.setOnSubagent(onSubagent);

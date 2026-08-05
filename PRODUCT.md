@@ -60,6 +60,7 @@ No public inbound ports are required for normal usage.
 ### Result delivery
 
 - Send each completed assistant response after completion signal from SSE
+- Show elapsed time for tool calls running longer than 20 seconds, updated on a timer so it keeps counting while a tool blocks without producing output; covers subagent cards and compact mode, and the total duration stays on the finished tool line. A finished subagent card keeps the time its whole run took. Durations use the same `· 🕒 1h 2m 3s` format as the assistant run footer
 - Hide full model reasoning by default; optionally stream it in the thinking message when explicitly enabled
 - Split long responses into multiple Telegram messages
 - Send code updates as files (size-limited)
