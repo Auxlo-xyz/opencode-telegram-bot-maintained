@@ -3,8 +3,8 @@
 Drives the real bot through Telegram Web with Playwright MCP — no MTProto, no API
 credentials. A persistent browser profile keeps the web session logged in.
 
-Running the checks is the job of the `telegram-e2e-tester` subagent
-(`.claude/agents/telegram-e2e-tester.md`). This file covers the one-time setup
+Running the checks is the job of the `manual-tester` subagent
+(`.claude/agents/manual-tester.md`). This file covers the one-time setup
 a human does first.
 
 ## Files
@@ -16,6 +16,7 @@ a human does first.
 | `run-test-bot.ps1` / `.sh` | Starts the bot against an isolated home |
 | `stop-test-bot.ps1` / `.sh` | Stops the test bot and its OpenCode server |
 | `probes.js` | DOM probes and confirmed Telegram Web selectors |
+| `scenarios/` | Regression scenarios the subagent runs before any feature check |
 | `.tmp/e2e/home/` | Runtime state: `settings.json`, `logs/` |
 | `.tmp/e2e/browser-profile/` | Persistent Telegram Web login |
 
@@ -41,17 +42,21 @@ a human does first.
 
 4. **Update the peer id.** The subagent opens the chat by
    `data-peer-id`. If you use a different test bot, update that id in
-   `.claude/agents/telegram-e2e-tester.md`.
+   `.claude/agents/manual-tester.md`.
 
 ## Running
 
 ```powershell
-.\e2e\run-test-bot.ps1 -SkipBuild     # Windows
+.\e2e\run-test-bot.ps1                # Windows
 ```
 
 ```bash
-./e2e/run-test-bot.sh --skip-build    # macOS / Linux
+./e2e/run-test-bot.sh                 # macOS / Linux
 ```
+
+It builds first and refuses to start on a compile error. Add `-SkipBuild` /
+`--skip-build` only when you know `dist/` is already current — the subagent never
+does, since it is called right after the code changed.
 
 Everything stays inside `.tmp/e2e/home`, so your real `.env`, `settings.json`
 and `logs/` are untouched. Logs land in `.tmp/e2e/home/logs/`, one file per
@@ -90,6 +95,12 @@ too — there is no `.mcp.json` in this project.
 
 ## What to test
 
+`scenarios/` holds the regression scenarios. The subagent runs them before any
+feature check, so a change that breaks the basic loop is caught before anything
+else is judged. Today there is one, [`smoke.md`](./scenarios/smoke.md) — longer
+scenarios get added as separate files next to it.
+
+The feature scenario itself is passed to the subagent per task, as behaviour
+only: it gets no diff and no implementation detail, and writes its own cases.
 Commands, features, and interaction routing rules are documented in
-[`PRODUCT.md`](../PRODUCT.md). Scenarios are passed to the subagent per task;
-a regression suite is not written yet.
+[`PRODUCT.md`](../PRODUCT.md).
