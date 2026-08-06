@@ -441,6 +441,7 @@ npm run dev
 | `npm run dev`                   | Build and start (development)        |
 | `npm run build`                 | Compile TypeScript                   |
 | `npm start`                     | Run compiled code                    |
+| `npm run release:prepare`       | Bump version and seed release notes  |
 | `npm run release:notes:preview` | Preview auto-generated release notes |
 | `npm run lint`                  | ESLint check (zero warnings policy)  |
 | `npm run typecheck`             | Type-check `src` and `tests`         |

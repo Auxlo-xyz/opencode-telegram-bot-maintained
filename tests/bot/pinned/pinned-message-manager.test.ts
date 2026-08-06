@@ -596,6 +596,19 @@ describe("pinned/manager", () => {
       expect(fakeApi.editMessageText).toHaveBeenCalledTimes(1);
     });
 
+    it("applies a diff that drops one of the changed files", async () => {
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
+        { file: "D:/repo/src/b.ts", additions: 2, deletions: 0 },
+      ]);
+      await pinnedMessageManager.onSessionDiff([
+        { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
+      ]);
+
+      expect(fakeApi.editMessageText).toHaveBeenCalledTimes(2);
+      expect(String(fakeApi.editMessageText.mock.calls[1][2])).not.toContain("src/b.ts");
+    });
+
     it("applies a diff that changes the line counts of the same file", async () => {
       await pinnedMessageManager.onSessionDiff([
         { file: "D:/repo/src/a.ts", additions: 1, deletions: 0 },
