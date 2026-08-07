@@ -23,6 +23,7 @@ function createScheduledTask(overrides: Partial<ScheduledTask> = {}): ScheduledT
     kind: "cron",
     projectId: "project-1",
     projectWorktree: "D:/Projects/Repo",
+    agent: "build",
     model: {
       providerID: "openai",
       modelID: "gpt-5",
@@ -73,6 +74,19 @@ describe("app/stores/scheduled-task-store", () => {
     };
 
     expect(settingsFile.scheduledTasks).toEqual([task]);
+  });
+
+  it("backfills the agent for legacy tasks persisted without it", async () => {
+    const legacyTask = createScheduledTask({
+      agent: undefined,
+    }) as ScheduledTask;
+
+    await addScheduledTask(legacyTask);
+
+    expect(listScheduledTasks()[0]).toMatchObject({
+      id: "task-1",
+      agent: "build",
+    });
   });
 
   it("removes scheduled task from persisted storage", async () => {

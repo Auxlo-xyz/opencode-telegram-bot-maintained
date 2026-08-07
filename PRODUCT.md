@@ -156,7 +156,7 @@ Model picker behavior:
 - [x] In-chat controls for model, agent, variant, and context
 - [x] Built-in and custom command catalog access (`/commands`)
 - [x] Skills catalog access (`/skills`)
-- [x] Scheduled task creation flow (`/task`)
+- [x] Scheduled task creation flow (`/task`), remembering the agent selected at creation and showing it (alongside the model) in the task confirmation and task details
 - [x] Scheduled task runtime execution with deferred Telegram delivery
 - [x] Scheduled task list and deletion flow (`/tasklist`)
 - [x] Persistent settings between restarts (`settings.json`)

@@ -452,7 +452,7 @@ export const zh: I18nDictionary = {
   "task.prompt.body": "📝 现在发送机器人按此时间安排需要执行的内容。",
   "task.prompt_empty": "⚠️ 任务文本不能为空。",
   "task.created":
-    "✅ 定时任务已创建\n\n任务：{description}\n项目：{project}\n模型：{model}\n时间安排：{schedule}\n{cronLine}下次运行：{nextRunAt}",
+    "✅ 定时任务已创建\n\n任务：{description}\n项目：{project}\n代理：{agent}\n模型：{model}\n时间安排：{schedule}\n{cronLine}下次运行：{nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 重新输入时间安排",
   "task.button.cancel": "❌ 取消",

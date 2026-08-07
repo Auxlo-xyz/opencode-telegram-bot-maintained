@@ -481,7 +481,7 @@ export const ar: I18nDictionary = {
   "task.prompt.body": "📝 أرسل الآن وصف المهمة التي تريد تشغيلها تلقائيًا.",
   "task.prompt_empty": "⚠️ لا يمكن أن يكون وصف المهمة فارغًا.",
   "task.created":
-    "✅ تم إنشاء المهمة المجدولة\n\nالمهمة: {description}\nالمشروع: {project}\nالنموذج: {model}\nالموعد: {schedule}\n{cronLine}التشغيل التالي: {nextRunAt}",
+    "✅ تم إنشاء المهمة المجدولة\n\nالمهمة: {description}\nالمشروع: {project}\nالوكيل: {agent}\nالنموذج: {model}\nالموعد: {schedule}\n{cronLine}التشغيل التالي: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 تعديل الموعد",
   "task.button.cancel": "❌ إلغاء",

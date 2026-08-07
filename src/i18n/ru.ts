@@ -495,7 +495,7 @@ export const ru: I18nDictionary = {
   "task.prompt.body": "📝 Теперь отправьте текст задачи, которую нужно выполнять по расписанию.",
   "task.prompt_empty": "⚠️ Текст задачи не может быть пустым.",
   "task.created":
-    "✅ Задача по расписанию создана\n\nЗадача: {description}\nПроект: {project}\nМодель: {model}\nРасписание: {schedule}\n{cronLine}Следующий запуск: {nextRunAt}",
+    "✅ Задача по расписанию создана\n\nЗадача: {description}\nПроект: {project}\nАгент: {agent}\nМодель: {model}\nРасписание: {schedule}\n{cronLine}Следующий запуск: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 Ввести период заново",
   "task.button.cancel": "❌ Отмена",

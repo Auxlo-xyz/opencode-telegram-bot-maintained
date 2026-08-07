@@ -516,7 +516,7 @@ export const fr: I18nDictionary = {
   "task.prompt.body": "📝 Envoyez maintenant ce que le bot doit faire selon ce planning.",
   "task.prompt_empty": "⚠️ Le texte de la tâche ne peut pas être vide.",
   "task.created":
-    "✅ Tâche planifiée créée\n\nTâche : {description}\nProjet : {project}\nModèle : {model}\nPlanning : {schedule}\n{cronLine}Prochaine exécution : {nextRunAt}",
+    "✅ Tâche planifiée créée\n\nTâche : {description}\nProjet : {project}\nAgent : {agent}\nModèle : {model}\nPlanning : {schedule}\n{cronLine}Prochaine exécution : {nextRunAt}",
   "task.created.cron": "Cron : {cron}",
   "task.button.retry_schedule": "🔁 Ressaisir le planning",
   "task.button.cancel": "❌ Annuler",

@@ -512,7 +512,7 @@ export const es: I18nDictionary = {
   "task.prompt.body": "📝 Ahora envía lo que el bot debe hacer según este horario.",
   "task.prompt_empty": "⚠️ El texto de la tarea no puede estar vacío.",
   "task.created":
-    "✅ Tarea programada creada\n\nTarea: {description}\nProyecto: {project}\nModelo: {model}\nHorario: {schedule}\n{cronLine}Próxima ejecución: {nextRunAt}",
+    "✅ Tarea programada creada\n\nTarea: {description}\nProyecto: {project}\nAgente: {agent}\nModelo: {model}\nHorario: {schedule}\n{cronLine}Próxima ejecución: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 Volver a introducir horario",
   "task.button.cancel": "❌ Cancelar",

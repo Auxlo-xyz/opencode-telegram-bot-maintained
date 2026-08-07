@@ -512,7 +512,7 @@ export const pt: I18nDictionary = {
   "task.prompt.body": "📝 Agora envie o que o bot deve fazer conforme o agendamento.",
   "task.prompt_empty": "⚠️ O texto da tarefa não pode ficar vazio.",
   "task.created":
-    "✅ Tarefa agendada criada\n\nTarefa: {description}\nProjeto: {project}\nModelo: {model}\nAgendamento: {schedule}\n{cronLine}Próxima execução: {nextRunAt}",
+    "✅ Tarefa agendada criada\n\nTarefa: {description}\nProjeto: {project}\nAgente: {agent}\nModelo: {model}\nAgendamento: {schedule}\n{cronLine}Próxima execução: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 Reenviar agendamento",
   "task.button.cancel": "❌ Cancelar",

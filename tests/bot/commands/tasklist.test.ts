@@ -31,6 +31,7 @@ function createTask(id: string, overrides: Partial<Record<string, unknown>> = {}
     cron: "0 * * * *",
     projectId: `project-${id}`,
     projectWorktree: `D:\\Projects\\${id}`,
+    agent: "build",
     model: {
       providerID: "openai",
       modelID: "gpt-5",
@@ -168,16 +169,14 @@ describe("bot/commands/tasklist", () => {
     const [text] = (ctx.editMessageText as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
     expect(text).toContain("Check weather forecast");
     expect(text).toContain("D:\\Projects\\RepoA");
+    expect(text).toContain("🛠️ Build");
     expect(text).toContain("Model: openai/gpt-5 (default)");
     expect(text).toContain("Every hour");
     expect(text).toContain("Cron: 0 * * * *");
     expect(text).not.toContain("every hour please");
-    expect(text.indexOf("D:\\Projects\\RepoA")).toBeLessThan(
-      text.indexOf("Model: openai/gpt-5 (default)"),
-    );
-    expect(text.indexOf("Model: openai/gpt-5 (default)")).toBeLessThan(
-      text.indexOf("Every hour"),
-    );
+    expect(text.indexOf("D:\\Projects\\RepoA")).toBeLessThan(text.indexOf("🛠️ Build"));
+    expect(text.indexOf("🛠️ Build")).toBeLessThan(text.indexOf("Model: openai/gpt-5 (default)"));
+    expect(text.indexOf("Model: openai/gpt-5 (default)")).toBeLessThan(text.indexOf("Every hour"));
 
     expect(interactionManager.getSnapshot()).toMatchObject({
       kind: "custom",

@@ -514,7 +514,7 @@ export const de: I18nDictionary = {
   "task.prompt.body": "📝 Sende jetzt, was der Bot nach Zeitplan tun soll.",
   "task.prompt_empty": "⚠️ Der Aufgabentext darf nicht leer sein.",
   "task.created":
-    "✅ Geplante Aufgabe erstellt\n\nAufgabe: {description}\nProjekt: {project}\nModell: {model}\nZeitplan: {schedule}\n{cronLine}Nächster Lauf: {nextRunAt}",
+    "✅ Geplante Aufgabe erstellt\n\nAufgabe: {description}\nProjekt: {project}\nAgent: {agent}\nModell: {model}\nZeitplan: {schedule}\n{cronLine}Nächster Lauf: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 Zeitplan neu eingeben",
   "task.button.cancel": "❌ Abbrechen",

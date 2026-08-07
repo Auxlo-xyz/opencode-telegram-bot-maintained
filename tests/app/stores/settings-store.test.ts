@@ -327,6 +327,7 @@ describe("app/stores/settings-store", () => {
       id,
       projectId: "project-1",
       projectWorktree: "D:/work/project-1",
+      agent: "build",
       model: { providerID: "anthropic", modelID: "claude-opus-5", variant: null },
       scheduleText: "every day at 9",
       scheduleSummary: "Every day at 09:00",

@@ -493,7 +493,7 @@ export const en = {
   "task.prompt.body": "📝 Now send what the bot should do on schedule.",
   "task.prompt_empty": "⚠️ Task text cannot be empty.",
   "task.created":
-    "✅ Scheduled task created\n\nTask: {description}\nProject: {project}\nModel: {model}\nSchedule: {schedule}\n{cronLine}Next run: {nextRunAt}",
+    "✅ Scheduled task created\n\nTask: {description}\nProject: {project}\nAgent: {agent}\nModel: {model}\nSchedule: {schedule}\n{cronLine}Next run: {nextRunAt}",
   "task.created.cron": "Cron: {cron}",
   "task.button.retry_schedule": "🔁 Re-enter schedule",
   "task.button.cancel": "❌ Cancel",

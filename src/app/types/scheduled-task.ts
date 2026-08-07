@@ -4,6 +4,8 @@ export type ScheduledTaskKind = "cron" | "once";
 
 export type ScheduledTaskStatus = "idle" | "running" | "success" | "error";
 
+export const DEFAULT_TASK_AGENT = "build";
+
 export interface ScheduledTaskModel {
   providerID: string;
   modelID: string;
@@ -14,6 +16,7 @@ export interface ScheduledTaskBase {
   id: string;
   projectId: string;
   projectWorktree: string;
+  agent: string;
   model: ScheduledTaskModel;
   scheduleText: string;
   scheduleSummary: string;
@@ -63,6 +66,7 @@ export interface TaskCreationState {
   stage: "awaiting_schedule" | "parsing_schedule" | "awaiting_prompt";
   projectId: string;
   projectWorktree: string;
+  agent: string;
   model: ScheduledTaskModel;
   scheduleText: string | null;
   parsedSchedule: ParsedTaskSchedule | null;
@@ -90,6 +94,8 @@ export function cloneScheduledTaskModel(model: ScheduledTaskModel): ScheduledTas
 export function cloneScheduledTask(task: ScheduledTask): ScheduledTask {
   return {
     ...task,
+    // Backfill for tasks persisted before the agent field existed (they ran with "build").
+    agent: task.agent ?? DEFAULT_TASK_AGENT,
     model: cloneScheduledTaskModel(task.model),
   };
 }
