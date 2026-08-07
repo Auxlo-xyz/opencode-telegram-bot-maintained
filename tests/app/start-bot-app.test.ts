@@ -24,6 +24,7 @@ const mocked = vi.hoisted(() => ({
   loggerErrorMock: vi.fn(),
   initializeLoggerMock: vi.fn(),
   getLogFilePathMock: vi.fn(),
+  flushLoggerMock: vi.fn(),
   config: {
     opencode: {
       apiUrl: "http://localhost:4096",
@@ -91,6 +92,7 @@ vi.mock("../../src/runtime/service/env.js", () => ({
 vi.mock("../../src/utils/logger.js", () => ({
   getLogFilePath: mocked.getLogFilePathMock,
   initializeLogger: mocked.initializeLoggerMock,
+  flushLogger: mocked.flushLoggerMock,
   logger: {
     debug: mocked.loggerDebugMock,
     info: mocked.loggerInfoMock,
@@ -190,6 +192,7 @@ describe("app/start-bot-app", () => {
     mocked.loggerErrorMock.mockReset();
     mocked.initializeLoggerMock.mockReset();
     mocked.getLogFilePathMock.mockReset();
+    mocked.flushLoggerMock.mockReset();
 
     mocked.createBotMock.mockReturnValue(createBot());
     mocked.autoRestartStartMock.mockResolvedValue(false);
@@ -201,6 +204,7 @@ describe("app/start-bot-app", () => {
     mocked.isServiceChildProcessMock.mockReturnValue(false);
     mocked.initializeLoggerMock.mockResolvedValue(undefined);
     mocked.getLogFilePathMock.mockReturnValue(null);
+    mocked.flushLoggerMock.mockResolvedValue(undefined);
 
     registeredProcessHandlers.clear();
     vi.spyOn(process, "on").mockImplementation(((
@@ -335,6 +339,44 @@ describe("app/start-bot-app", () => {
     releaseStart();
     await appPromise;
     await rm(stateDir, { recursive: true, force: true });
+  });
+
+  it("flushes the log file after settings on uncaught exception", async () => {
+    const { releaseStart, appPromise } = await startAppWithPendingBot();
+
+    expectHandler("uncaughtException")(new Error("boom"));
+    await vi.waitFor(() => {
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    expect(mocked.flushLoggerMock).toHaveBeenCalledTimes(1);
+    expect(mocked.flushLoggerMock.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mocked.flushSettingsMock.mock.invocationCallOrder[0],
+    );
+
+    releaseStart();
+    await appPromise;
+  });
+
+  it("flushes the log file after settings before the forced shutdown exit", async () => {
+    const { releaseStart, appPromise } = await startAppWithPendingBot();
+
+    vi.useFakeTimers();
+    expectHandler("SIGINT")();
+    await vi.advanceTimersByTimeAsync(5000);
+    await flushBackgroundTasks();
+
+    expect(mocked.loggerWarnMock).toHaveBeenCalledWith(expect.stringContaining("forcing exit"));
+    expect(mocked.flushSettingsMock).toHaveBeenCalledTimes(1);
+    expect(mocked.flushLoggerMock).toHaveBeenCalledTimes(1);
+    expect(mocked.flushLoggerMock.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mocked.flushSettingsMock.mock.invocationCallOrder[0],
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(0);
+
+    vi.useRealTimers();
+    releaseStart();
+    await appPromise;
   });
 
   it("flushes settings before the forced shutdown exit", async () => {

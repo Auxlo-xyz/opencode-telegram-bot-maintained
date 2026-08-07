@@ -314,7 +314,7 @@ export function getLogFilePath(): string | null {
   return logFilePath;
 }
 
-export async function __flushLoggerForTests(): Promise<void> {
+export async function flushLogger(): Promise<void> {
   if (cleanupPromise) {
     await cleanupPromise;
   }
@@ -333,6 +333,10 @@ export async function __flushLoggerForTests(): Promise<void> {
       resolve();
     });
   });
+}
+
+export async function __flushLoggerForTests(): Promise<void> {
+  await flushLogger();
 }
 
 export function __resetLoggerForTests(): void {
