@@ -12,7 +12,7 @@ Functional requirements, features, and development status are in [PRODUCT.md](./
 ## Technology stack
 
 - **Language:** TypeScript 5.x
-- **Runtime:** Node.js 22+
+- **Runtime:** Node.js 22.14+
 - **Package manager:** npm
 - **Configuration:** environment variables (`.env`)
 - **Logging:** custom logger with levels (`debug`, `info`, `warn`, `error`)
