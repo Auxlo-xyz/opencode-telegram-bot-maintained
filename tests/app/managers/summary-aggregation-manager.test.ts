@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Event } from "@opencode-ai/sdk/v2";
 import { summaryAggregator } from "../../../src/app/managers/summary-aggregation-manager.js";
+import { logger } from "../../../src/utils/logger.js";
 
 const mocked = vi.hoisted(() => ({
   getCurrentProjectMock: vi.fn(),
@@ -2491,5 +2492,144 @@ describe("summary/aggregator", () => {
     for (const call of onExternalUserInput.mock.calls) {
       expect(call[2]).not.toContain("SECRET_FIRST_DELTA");
     }
+  });
+
+  describe("unexpected event shapes", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("warns and skips a message.part.delta whose properties are not an object", () => {
+      const warnSpy = vi.spyOn(logger, "warn");
+      const onPartial = vi.fn();
+      summaryAggregator.setOnPartial(onPartial);
+      summaryAggregator.setSession("session-1");
+
+      summaryAggregator.processEvent({
+        type: "message.part.delta",
+        properties: null,
+      } as unknown as Event);
+      summaryAggregator.processEvent({
+        type: "message.part.delta",
+      } as unknown as Event);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        "[Aggregator] message.part.delta with unexpected shape, ignoring",
+      );
+      expect(onPartial).not.toHaveBeenCalled();
+    });
+
+    it("falls back to a generic message and warns when session.error carries a non-object error", async () => {
+      const warnSpy = vi.spyOn(logger, "warn");
+      const onSessionError = vi.fn();
+      summaryAggregator.setOnSessionError(onSessionError);
+      summaryAggregator.setSession("session-1");
+
+      summaryAggregator.processEvent({
+        type: "session.error",
+        properties: {
+          sessionID: "session-1",
+          error: 42,
+        },
+      } as unknown as Event);
+
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      expect(onSessionError).toHaveBeenCalledWith("session-1", "Unknown session error");
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("surfaces a string session.error with a warn instead of the generic fallback", async () => {
+      const warnSpy = vi.spyOn(logger, "warn");
+      const onSessionError = vi.fn();
+      summaryAggregator.setOnSessionError(onSessionError);
+      summaryAggregator.setSession("session-1");
+
+      summaryAggregator.processEvent({
+        type: "session.error",
+        properties: {
+          sessionID: "session-1",
+          error: "upstream exploded",
+        },
+      } as unknown as Event);
+
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      expect(onSessionError).toHaveBeenCalledWith("session-1", "upstream exploded");
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("passes a reasoning part without title keys to the thinking callback without a title", async () => {
+      const onThinking = vi.fn();
+      summaryAggregator.setOnThinking(onThinking);
+      summaryAggregator.setSession("session-1");
+
+      summaryAggregator.processEvent({
+        type: "message.updated",
+        properties: {
+          info: {
+            id: "message-no-title",
+            sessionID: "session-1",
+            role: "assistant",
+            time: { created: Date.now() },
+          },
+        },
+      } as unknown as Event);
+
+      summaryAggregator.processEvent({
+        type: "message.part.updated",
+        properties: {
+          part: {
+            id: "part-reasoning-no-title",
+            sessionID: "session-1",
+            messageID: "message-no-title",
+            type: "reasoning",
+            text: "Just thinking",
+            time: { start: Date.now() },
+          },
+        },
+      } as unknown as Event);
+
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      expect(onThinking).toHaveBeenCalledWith({
+        sessionId: "session-1",
+        messageId: "message-no-title",
+        isFirstUpdate: true,
+        sections: [{ id: "part-reasoning-no-title", text: "Just thinking" }],
+      });
+    });
+
+    it("does not crash when a completed tool part carries non-object metadata", () => {
+      const onTool = vi.fn();
+      summaryAggregator.setOnTool(onTool);
+      summaryAggregator.setSession("session-1");
+
+      summaryAggregator.processEvent({
+        type: "message.part.updated",
+        properties: {
+          part: {
+            id: "part-tool-weird-meta",
+            sessionID: "session-1",
+            messageID: "message-1",
+            type: "tool",
+            callID: "call-weird-meta",
+            tool: "bash",
+            state: {
+              status: "completed",
+              input: { command: "ls" },
+              title: "ls",
+              metadata: "not-an-object",
+              time: { start: Date.now(), end: Date.now() },
+            },
+          },
+        },
+      } as unknown as Event);
+
+      expect(onTool).toHaveBeenCalledTimes(1);
+      expect(onTool).toHaveBeenCalledWith(
+        expect.objectContaining({ callId: "call-weird-meta", tool: "bash" }),
+      );
+    });
   });
 });

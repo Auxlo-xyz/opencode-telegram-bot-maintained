@@ -2,6 +2,7 @@ import { config } from "../../config.js";
 import { t } from "../../i18n/index.js";
 import { opencodeClient } from "../../opencode/client.js";
 import { logger } from "../../utils/logger.js";
+import { extractErrorMessage } from "../../utils/opencode-error.js";
 import {
   cleanupScheduledTaskSessionIgnores,
   registerScheduledTaskSessionIgnore,
@@ -89,40 +90,6 @@ function collectResponseText(parts: TextLikePart[]): string {
     .map((part) => part.text)
     .join("")
     .trim();
-}
-
-function extractErrorMessage(error: unknown): string | null {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message.trim();
-  }
-
-  if (typeof error === "string" && error.trim()) {
-    return error.trim();
-  }
-
-  if (!error || typeof error !== "object") {
-    return null;
-  }
-
-  const typedError = error as {
-    message?: unknown;
-    name?: unknown;
-    data?: { message?: unknown };
-  };
-
-  if (typeof typedError.data?.message === "string" && typedError.data.message.trim()) {
-    return typedError.data.message.trim();
-  }
-
-  if (typeof typedError.message === "string" && typedError.message.trim()) {
-    return typedError.message.trim();
-  }
-
-  if (typeof typedError.name === "string" && typedError.name.trim()) {
-    return typedError.name.trim();
-  }
-
-  return null;
 }
 
 function isTimeoutErrorMessage(message: string): boolean {
