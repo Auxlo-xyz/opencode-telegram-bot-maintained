@@ -19,6 +19,7 @@ a human does first.
 | `scenarios/` | Regression scenarios the subagent runs before any feature check |
 | `.tmp/e2e/home/` | Runtime state: `settings.json`, `logs/` |
 | `.tmp/e2e/browser-profile/` | Persistent Telegram Web login |
+| `.tmp/e2e/output/` | Screenshots and console logs the subagent produces |
 
 ## One-time setup
 

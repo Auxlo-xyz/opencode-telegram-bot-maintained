@@ -37,4 +37,5 @@ settings.json.tmp
 # Packaging artifacts
 *.tgz
 
-.boardown
+.boardown/
+manager/
