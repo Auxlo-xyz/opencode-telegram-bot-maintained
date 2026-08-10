@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+﻿import { describe, expect, it, vi } from "vitest";
 import { finalizeAssistantResponse } from "../../../src/bot/streaming/finalize-assistant-response.js";
 
 describe("bot/streaming/finalize-assistant-response", () => {
@@ -19,7 +19,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
       prepareStreamingPayload: vi.fn(() => ({
         parts: [
           {
-            text: "final reply",
+            blocks: [],
             fallbackText: "final reply",
             source: "plain" as const,
           },
@@ -27,13 +27,14 @@ describe("bot/streaming/finalize-assistant-response", () => {
       })),
       renderFinalParts: vi.fn(() => [
         {
-          text: "part 1",
-          entities: [{ type: "bold" as const, offset: 0, length: 6 }],
+          blocks: [
+            { type: "paragraph" as const, text: { type: "bold" as const, text: "part 1" } },
+          ],
           fallbackText: "part 1",
-          source: "entities" as const,
+          source: "blocks" as const,
         },
         {
-          text: "part 2",
+          blocks: [],
           fallbackText: "part 2",
           source: "plain" as const,
         },
@@ -45,7 +46,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
     expect(responseStreamer.complete).toHaveBeenCalledWith("s1", "m1", {
       parts: [
         {
-          text: "final reply",
+          blocks: [],
           fallbackText: "final reply",
           source: "plain",
         },
@@ -58,17 +59,16 @@ describe("bot/streaming/finalize-assistant-response", () => {
     expect(sendRenderedPart).toHaveBeenNthCalledWith(
       1,
       {
-        text: "part 1",
-        entities: [{ type: "bold", offset: 0, length: 6 }],
+        blocks: [{ type: "paragraph", text: { type: "bold", text: "part 1" } }],
         fallbackText: "part 1",
-        source: "entities",
+        source: "blocks",
       },
       { disable_notification: true, reply_markup: keyboard },
     );
     expect(sendRenderedPart).toHaveBeenNthCalledWith(
       2,
       {
-        text: "part 2",
+        blocks: [],
         fallbackText: "part 2",
         source: "plain",
       },
@@ -85,7 +85,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
     const prepareStreamingPayload = vi.fn(() => ({
       parts: [
         {
-          text: "reply",
+          blocks: [],
           fallbackText: "reply",
           source: "plain" as const,
         },
@@ -102,7 +102,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
       prepareStreamingPayload,
       renderFinalParts: vi.fn(() => [
         {
-          text: "reply",
+          blocks: [],
           fallbackText: "reply",
           source: "plain" as const,
         },
@@ -114,7 +114,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
     expect(responseStreamer.complete).toHaveBeenCalledWith("s1", "m1", {
       parts: [
         {
-          text: "reply",
+          blocks: [],
           fallbackText: "reply",
           source: "plain",
         },
@@ -135,7 +135,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
     const prepareStreamingPayload = vi.fn(() => ({
       parts: [
         {
-          text: "reply",
+          blocks: [],
           fallbackText: "reply",
           source: "plain" as const,
         },
@@ -151,7 +151,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
       prepareStreamingPayload,
       renderFinalParts: vi.fn(() => [
         {
-          text: "reply",
+          blocks: [],
           fallbackText: "reply",
           source: "plain" as const,
         },
@@ -163,7 +163,7 @@ describe("bot/streaming/finalize-assistant-response", () => {
     expect(sendRenderedPart).toHaveBeenCalledTimes(1);
     expect(sendRenderedPart).toHaveBeenCalledWith(
       {
-        text: "reply",
+        blocks: [],
         fallbackText: "reply",
         source: "plain",
       },
@@ -171,3 +171,4 @@ describe("bot/streaming/finalize-assistant-response", () => {
     );
   });
 });
+

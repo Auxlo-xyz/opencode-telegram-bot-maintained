@@ -1,28 +1,26 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResponseStreamer } from "../../../src/bot/streaming/response-streamer.js";
+import { getTelegramRenderedPartSignature } from "../../../src/bot/render/part-signature.js";
+import type { TelegramRenderedPart } from "../../../src/bot/render/types.js";
 
-function plainPart(text: string) {
+function plainPart(text: string): TelegramRenderedPart {
   return {
-    text,
+    blocks: [],
     fallbackText: text,
-    source: "plain" as const,
+    source: "plain",
   };
 }
 
-function richPart(
-  text: string,
-  entities: { type: "bold" | "italic"; offset: number; length: number }[],
-) {
+function richPart(text: string): TelegramRenderedPart {
   return {
-    text,
-    entities,
+    blocks: [{ type: "paragraph", text: { type: "bold", text } }],
     fallbackText: text,
-    source: "entities" as const,
+    source: "blocks",
   };
 }
 
-function signature(part: { text: string; entities?: unknown[] }) {
-  return `${part.text}\n${JSON.stringify(part.entities ?? null)}`;
+function signature(part: TelegramRenderedPart) {
+  return getTelegramRenderedPartSignature(part);
 }
 
 describe("bot/streaming/response-streamer", () => {
@@ -402,36 +400,221 @@ describe("bot/streaming/response-streamer", () => {
     expect(deleteText).not.toHaveBeenCalled();
   });
 
-  it("keeps stream healthy when a part is locally downgraded to plain", async () => {
-    vi.useFakeTimers();
+  describe("plain part entities", () => {
+    function quotedPart(text: string, collapsed: boolean): TelegramRenderedPart {
+      return {
+        blocks: [],
+        fallbackText: text,
+        source: "plain",
+        entities: [
+          {
+            type: collapsed ? "expandable_blockquote" : "blockquote",
+            offset: 0,
+            length: text.length,
+          },
+        ],
+      };
+    }
 
-    let nextMessageId = 300;
-    const sendPart = vi.fn(async (part) => ({
-      messageId: nextMessageId++,
-      deliveredSignature: signature({ text: part.fallbackText }),
-    }));
-    const editPart = vi.fn(async (messageId, part) => ({ deliveredSignature: signature(part) }));
-    const deleteText = vi.fn().mockResolvedValue(undefined);
-    const streamer = new ResponseStreamer({
-      throttleMs: 0,
-      sendPart,
-      editPart,
-      deleteText,
+    it("carries entities through to the transport and re-edits when only the entity changes", async () => {
+      vi.useFakeTimers();
+
+      const sendPart = vi.fn(async (part) => ({
+        messageId: 700,
+        deliveredSignature: signature(part),
+      }));
+      const editPart = vi.fn(async (messageId, part) => ({ deliveredSignature: signature(part) }));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({ throttleMs: 0, sendPart, editPart, deleteText });
+
+      streamer.enqueue("s1", "m1", { parts: [quotedPart("reasoning", false)] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      expect(sendPart.mock.calls[0][0]).toEqual(quotedPart("reasoning", false));
+
+      // The text is identical; only the quote collapses. Without the entity in
+      // the signature this would be skipped as unchanged.
+      await streamer.complete("s1", "m1", { parts: [quotedPart("reasoning", true)] });
+
+      expect(editPart).toHaveBeenCalledTimes(1);
+      expect(editPart).toHaveBeenCalledWith(700, quotedPart("reasoning", true), undefined);
+    });
+  });
+
+  describe("sticky plain fallback", () => {
+    it("keeps editing as plain text after the transport reported a degradation", async () => {
+      vi.useFakeTimers();
+
+      const sendPart = vi.fn(async (part) => ({
+        messageId: 300,
+        deliveredSignature: signature(plainPart(part.fallbackText)),
+        degradedToPlain: true,
+      }));
+      const editPart = vi.fn(async (messageId, part) => ({ deliveredSignature: signature(part) }));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({
+        throttleMs: 0,
+        sendPart,
+        editPart,
+        deleteText,
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello")] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      const result = await streamer.complete("s1", "m1", { parts: [richPart("hello there")] });
+
+      expect(result.streamed).toBe(true);
+      expect(editPart).toHaveBeenCalledTimes(1);
+      expect(editPart).toHaveBeenCalledWith(300, plainPart("hello there"), undefined);
+      expect(deleteText).not.toHaveBeenCalled();
     });
 
-    const boldHello = richPart("hello", [{ type: "bold", offset: 0, length: 5 }]);
-    streamer.enqueue("s1", "m1", { parts: [boldHello] });
+    it("retries as plain text instead of breaking the stream on the first native failure", async () => {
+      vi.useFakeTimers();
 
-    await vi.waitFor(() => {
-      expect(sendPart).toHaveBeenCalledTimes(1);
+      const sendPart = vi.fn(async (part) => ({
+        messageId: 400,
+        deliveredSignature: signature(part),
+      }));
+      const editPart = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Bad Request: RICH_BLOCK_INVALID"))
+        .mockImplementation(async (messageId, part) => ({ deliveredSignature: signature(part) }));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({
+        throttleMs: 0,
+        sendPart,
+        editPart,
+        deleteText,
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello")] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      const result = await streamer.complete("s1", "m1", { parts: [richPart("hello there")] });
+
+      expect(result.streamed).toBe(true);
+      expect(editPart).toHaveBeenCalledTimes(2);
+      expect(editPart).toHaveBeenNthCalledWith(2, 400, plainPart("hello there"), undefined);
+      expect(deleteText).not.toHaveBeenCalled();
     });
 
-    const result = await streamer.complete("s1", "m1", { parts: [boldHello] });
+    it("re-chunks a long reply so plain parts fit a text message", async () => {
+      vi.useFakeTimers();
 
-    expect(result.streamed).toBe(true);
-    expect(editPart).toHaveBeenCalledTimes(1);
-    expect(editPart).toHaveBeenCalledWith(300, boldHello, undefined);
-    expect(deleteText).not.toHaveBeenCalled();
+      let nextMessageId = 500;
+      const sendPart = vi.fn(async (part) => ({
+        messageId: nextMessageId++,
+        deliveredSignature: signature(part),
+      }));
+      const editPart = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Bad Request: RICH_BLOCK_INVALID"))
+        .mockImplementation(async (messageId, part) => ({ deliveredSignature: signature(part) }));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({
+        throttleMs: 0,
+        sendPart,
+        editPart,
+        deleteText,
+      });
+
+      const longText = "x".repeat(9000);
+      streamer.enqueue("s1", "m1", { parts: [richPart("short")] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      const result = await streamer.complete("s1", "m1", { parts: [richPart(longText)] });
+
+      expect(result.streamed).toBe(true);
+      // One message was already on screen; the plain rebuild needs three.
+      expect(result.telegramMessageIds).toHaveLength(3);
+      expect(sendPart).toHaveBeenCalledTimes(3);
+
+      const plainEdits = editPart.mock.calls.filter(([, part]) => part.source === "plain");
+      expect(plainEdits.length).toBeGreaterThan(0);
+      for (const [, part] of plainEdits) {
+        expect(part.fallbackText.length).toBeLessThanOrEqual(4096);
+      }
+      for (const [part] of sendPart.mock.calls) {
+        expect(part.fallbackText.length).toBeLessThanOrEqual(4096);
+      }
+    });
+
+    it("breaks the stream when the plain retry fails as well", async () => {
+      vi.useFakeTimers();
+
+      const sendPart = vi.fn(async (part) => ({
+        messageId: 600,
+        deliveredSignature: signature(part),
+      }));
+      const editPart = vi.fn().mockRejectedValue(new Error("Bad Request: message can't be edited"));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({
+        throttleMs: 0,
+        sendPart,
+        editPart,
+        deleteText,
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello")] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello there")] });
+      await vi.waitFor(() => {
+        expect(editPart).toHaveBeenCalledTimes(2);
+      });
+
+      const result = await streamer.complete("s1", "m1", { parts: [richPart("hello there")] });
+
+      expect(result.streamed).toBe(false);
+      expect(deleteText).toHaveBeenCalledWith(600);
+    });
+
+    it("still skips unchanged payloads after switching to plain text", async () => {
+      vi.useFakeTimers();
+
+      const sendPart = vi.fn(async (part) => ({
+        messageId: 700,
+        deliveredSignature: signature(part),
+      }));
+      const editPart = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Bad Request: RICH_BLOCK_INVALID"))
+        .mockImplementation(async (messageId, part) => ({ deliveredSignature: signature(part) }));
+      const deleteText = vi.fn().mockResolvedValue(undefined);
+      const streamer = new ResponseStreamer({
+        throttleMs: 0,
+        sendPart,
+        editPart,
+        deleteText,
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello")] });
+      await vi.waitFor(() => {
+        expect(sendPart).toHaveBeenCalledTimes(1);
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello there")] });
+      await vi.waitFor(() => {
+        expect(editPart).toHaveBeenCalledTimes(2);
+      });
+
+      streamer.enqueue("s1", "m1", { parts: [richPart("hello there")] });
+      await vi.advanceTimersByTimeAsync(10);
+
+      expect(editPart).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("draft mode (completePart)", () => {

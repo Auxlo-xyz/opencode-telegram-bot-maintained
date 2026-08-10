@@ -173,7 +173,7 @@ async function sendLatestAssistantResponse(
     return;
   }
 
-  const parts = renderAssistantFinalPartsSafe(responseText, TELEGRAM_MESSAGE_LIMIT);
+  const parts = renderAssistantFinalPartsSafe(responseText);
   for (const part of parts) {
     await sendRenderedBotPart({
       api,
