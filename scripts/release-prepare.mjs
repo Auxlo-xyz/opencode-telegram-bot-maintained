@@ -80,8 +80,6 @@ function seedReleaseNotes(version) {
       resolve(process.cwd(), "scripts", "generate-release-notes.mjs"),
       "--version",
       version,
-      "--kind",
-      "stable",
       "--repo",
       repository,
       "--output",
