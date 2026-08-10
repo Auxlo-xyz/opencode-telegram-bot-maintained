@@ -258,6 +258,7 @@ describe("open command", () => {
       expect(result).toBe(true);
       expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
         text: t("open.access_denied"),
+        show_alert: true,
       });
       expect(mocked.scanDirectoryMock).not.toHaveBeenCalled();
     });
@@ -339,9 +340,9 @@ describe("open command", () => {
 
       expect(result).toBe(true);
       expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
-        text: t("callback.processing_error"),
+        text: t("open.select_error"),
       });
-      expect(ctx.reply).toHaveBeenCalledWith(t("open.select_error"));
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
 
     it("should show error when navigation scan fails", async () => {

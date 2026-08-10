@@ -49,8 +49,8 @@ export const ru: I18nDictionary = {
   "inline.button.cancel": "❌ Отмена",
   "inline.button.close": "❌ Закрыть",
   "inline.inactive_callback": "Это меню уже неактивно",
-  "inline.cancelled_callback": "Отменено",
 
+  "common.cancelled": "Отменено",
   "common.unknown": "неизвестна",
   "common.unknown_error": "неизвестная ошибка",
 
@@ -205,7 +205,6 @@ export const ru: I18nDictionary = {
   "messages.fetch_error":
     "🔴 OpenCode Server недоступен или произошла ошибка при получении списка сообщений.",
   "messages.inactive_callback": "Это меню сообщений уже неактивно",
-  "messages.cancelled_callback": "Отменено",
   "messages.page_empty_callback": "На этой странице нет сообщений",
   "messages.button.prev_page": "⬅️ Назад",
   "messages.button.next_page": "Вперёд ➡️",
@@ -292,7 +291,6 @@ export const ru: I18nDictionary = {
   "opencode_stop.error":
     "🔴 Произошла ошибка при остановке сервера.\n\nПроверьте логи приложения для подробностей.",
 
-  "agent.changed_callback": "Агент изменен: {name}",
   "agent.changed_message": "✅ Агент изменен на: {name}",
   "agent.change_error_callback": "Ошибка при смене агента",
   "agent.menu.current": "Текущий агент: {name}\n\nВыберите агента:",
@@ -300,7 +298,6 @@ export const ru: I18nDictionary = {
   "agent.menu.empty": "⚠️ Нет доступных агентов",
   "agent.menu.error": "🔴 Не удалось получить список агентов",
 
-  "model.changed_callback": "Модель изменена: {name}",
   "model.changed_message": "✅ Модель изменена на: {name}",
   "model.change_error_callback": "Ошибка при смене модели",
   "model.menu.empty": "⚠️ Нет доступных моделей",
@@ -332,7 +329,6 @@ export const ru: I18nDictionary = {
   "model.provider_models.page_indicator": "Страница {current}/{total}",
 
   "variant.model_not_selected_callback": "Ошибка: модель не выбрана",
-  "variant.changed_callback": "Вариант изменен: {name}",
   "variant.changed_message": "✅ Вариант изменен на: {name}",
   "variant.change_error_callback": "Ошибка при смене варианта",
   "variant.select_model_first": "⚠️ Сначала выберите модель",
@@ -344,7 +340,6 @@ export const ru: I18nDictionary = {
   "context.no_active_session": "⚠️ Нет активной сессии. Создайте сессию командой /new",
   "context.confirm_text":
     '📊 Сжатие контекста для сессии "{title}"\n\nЭто уменьшит использование контекста, удалив старые сообщения из истории. Текущая задача не будет прервана.\n\nПродолжить?',
-  "context.callback_session_not_found": "Сессия не найдена",
   "context.callback_compacting": "Сжатие контекста...",
   "context.progress": "⏳ Сжимаю контекст...",
   "context.error": "❌ Ошибка при сжатии контекста",
@@ -500,8 +495,6 @@ export const ru: I18nDictionary = {
   "task.button.retry_schedule": "🔁 Ввести период заново",
   "task.button.cancel": "❌ Отмена",
   "task.retry_schedule_callback": "Возвращаю ввод периода...",
-  "task.cancel_callback": "Отменяю...",
-  "task.cancelled": "❌ Создание задачи по расписанию отменено.",
   "task.inactive_callback": "Этот сценарий создания задачи уже неактивен",
   "task.inactive": "⚠️ Сценарий создания задачи неактивен. Запустите /task снова.",
   "task.blocked.expected_input":
@@ -529,7 +522,6 @@ export const ru: I18nDictionary = {
   "tasklist.button.delete": "🗑 Удалить",
   "tasklist.button.cancel": "❌ Отмена",
   "tasklist.deleted_callback": "Удалено",
-  "tasklist.cancelled_callback": "Отменено",
   "tasklist.inactive_callback": "Это меню задач по расписанию уже неактивно",
   "tasklist.load_error": "🔴 Не удалось загрузить задачи по расписанию.",
 
@@ -542,7 +534,6 @@ export const ru: I18nDictionary = {
   "commands.confirm":
     "Подтвердите выполнение команды {command}. Для выполнения с аргументами отправьте аргументы отдельным сообщением.",
   "commands.inactive_callback": "Это меню команд уже неактивно",
-  "commands.cancelled_callback": "Отменено",
   "commands.execute_callback": "Запускаю команду...",
   "commands.executing_prefix": "⚡ Выполнение команды:",
   "commands.arguments_empty":
@@ -572,7 +563,6 @@ export const ru: I18nDictionary = {
   "skills.confirm":
     "Подтвердите запуск скилла {skill}. Чтобы запустить его с аргументами, отправьте аргументы следующим сообщением.",
   "skills.inactive_callback": "Это меню скиллов уже неактивно",
-  "skills.cancelled_callback": "Отменено",
   "skills.execute_callback": "Использую скилл...",
   "skills.executing_prefix": "⚡ Использую скилл:",
   "skills.arguments_empty":

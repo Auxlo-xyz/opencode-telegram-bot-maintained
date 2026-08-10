@@ -91,6 +91,7 @@ import {
   handleModelSearchTextInput,
   handleModelSearchResults,
 } from "../../../src/bot/callbacks/model-selection-callback-handler.js";
+import { t } from "../../../src/i18n/index.js";
 
 function mockContext(overrides: Record<string, unknown> = {}) {
   return {
@@ -280,6 +281,39 @@ describe("bot model selection", () => {
       expect(result).toBe(true);
       expect(mocked.selectModelMock).not.toHaveBeenCalled();
       expect(ctx.answerCallbackQuery).toHaveBeenCalled();
+    });
+
+    it("reports a selection failure and still claims the callback", async () => {
+      mocked.interactionManagerGetSnapshotMock.mockReturnValue({
+        kind: "inline",
+        metadata: {
+          menuKind: "model",
+          messageId: 999,
+          modelLists: {
+            favorites: [],
+            recent: [{ providerID: "openai", modelID: "gpt-5" }],
+          },
+        },
+      });
+      mocked.selectModelMock.mockImplementation(() => {
+        throw new Error("store write failed");
+      });
+
+      const ctx = mockContext({
+        callbackQuery: {
+          data: "model:list:recent:0",
+          message: { message_id: 999 },
+        },
+        api: {},
+      });
+
+      const result = await handleModelSelect(ctx);
+
+      // `false` here would make the router answer the callback a second time.
+      expect(result).toBe(true);
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+        text: t("model.change_error_callback"),
+      });
     });
   });
 

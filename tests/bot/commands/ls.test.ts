@@ -366,7 +366,10 @@ describe("bot/commands/ls", () => {
     const handled = await handleLsCallback(ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("ls.access_denied") });
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+      text: t("ls.access_denied"),
+      show_alert: true,
+    });
     expect(ctx.editMessageText).not.toHaveBeenCalled();
   });
 
@@ -375,7 +378,10 @@ describe("bot/commands/ls", () => {
     const handled = await handleLsCallback(ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("ls.access_denied") });
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+      text: t("ls.access_denied"),
+      show_alert: true,
+    });
     expect(ctx.editMessageText).not.toHaveBeenCalled();
   });
 
@@ -384,7 +390,10 @@ describe("bot/commands/ls", () => {
     const handled = await handleLsCallback(ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("ls.access_denied") });
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+      text: t("ls.access_denied"),
+      show_alert: true,
+    });
     expect(mocked.sendDownloadedFileMock).not.toHaveBeenCalled();
   });
 
@@ -393,7 +402,10 @@ describe("bot/commands/ls", () => {
     const handled = await handleLsCallback(ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("ls.access_denied") });
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+      text: t("ls.access_denied"),
+      show_alert: true,
+    });
     expect(mocked.sendDownloadedFileMock).not.toHaveBeenCalled();
   });
 

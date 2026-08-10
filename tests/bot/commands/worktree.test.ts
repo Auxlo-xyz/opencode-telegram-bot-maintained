@@ -197,6 +197,7 @@ describe("bot/commands/worktree", () => {
     expect(handled).toBe(true);
     expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
       text: t("worktree.already_selected_callback"),
+      show_alert: true,
     });
     expect(mocked.switchToProjectMock).not.toHaveBeenCalled();
   });

@@ -14,6 +14,7 @@ import type { ModelInfo, ProviderInfo } from "../../app/types/model.js";
 import { interactionManager } from "../../app/managers/interaction-manager.js";
 import { logger } from "../../utils/logger.js";
 import { t } from "../../i18n/index.js";
+import { cancelMenu, failure, switched } from "./feedback.js";
 import { createMainKeyboard } from "../keyboards/main-reply-keyboard.js";
 import { keyboardManager } from "../keyboards/keyboard-manager.js";
 import { pinnedMessageManager } from "../pinned/pinned-message-manager.js";
@@ -316,11 +317,7 @@ async function applyModelSelectionAndNotify(ctx: Context, modelInfo: ModelInfo):
   );
   const displayName = formatModelForDisplay(modelInfo.providerID, modelInfo.modelID);
 
-  await ctx.answerCallbackQuery({ text: t("model.changed_callback", { name: displayName }) });
-  await ctx.reply(t("model.changed_message", { name: displayName }), {
-    reply_markup: keyboard,
-  });
-  await ctx.deleteMessage().catch(() => {});
+  await switched(ctx, t("model.changed_message", { name: displayName }), keyboard);
 }
 
 /**
@@ -376,8 +373,8 @@ export async function handleModelSelect(ctx: Context): Promise<boolean> {
   } catch (err) {
     clearActiveInlineMenu("model_select_error");
     logger.error("[ModelHandler] Error handling model select:", err);
-    await ctx.answerCallbackQuery({ text: t("model.change_error_callback") }).catch(() => {});
-    return false;
+    await failure(ctx, "model.change_error_callback");
+    return true;
   }
 }
 
@@ -608,8 +605,7 @@ export async function handleModelSearchResults(ctx: Context): Promise<boolean> {
   // Cancel
   if (data === MODEL_SEARCH_CANCEL_CALLBACK) {
     interactionManager.clear("model_search_cancelled");
-    await ctx.answerCallbackQuery({ text: t("inline.cancelled_callback") }).catch(() => {});
-    await ctx.deleteMessage().catch(() => {});
+    await cancelMenu(ctx);
     return true;
   }
 

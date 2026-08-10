@@ -261,6 +261,25 @@ describe("bot question menu/callbacks", () => {
     expect(questionManager.getSelectedOptions(0)).toEqual(new Set<number>());
   });
 
+  it("answers the callback when the current question is already gone", async () => {
+    const api = createApi([250]);
+
+    questionManager.startQuestions([QUESTION_ONE], "req-stale");
+    await showCurrentQuestion(api, 123);
+    // Index past the last question: the message is still active, but there is
+    // nothing to answer anymore.
+    questionManager.nextQuestion();
+
+    const ctx = createCallbackContext("question:select:0:0", 250, api);
+    const handled = await handleQuestionCallback(ctx);
+
+    expect(handled).toBe(true);
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({
+      text: t("question.inactive_callback"),
+      show_alert: true,
+    });
+  });
+
   it("cancels poll and clears question interaction", async () => {
     const api = createApi([300]);
 
@@ -271,6 +290,7 @@ describe("bot question menu/callbacks", () => {
     const handled = await handleQuestionCallback(cancelCtx);
 
     expect(handled).toBe(true);
+    expect(cancelCtx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("common.cancelled") });
     expect(cancelCtx.editMessageText).toHaveBeenCalledWith(t("question.cancelled"));
     expect(api.deleteMessage).not.toHaveBeenCalled();
     expect(questionManager.isActive()).toBe(false);

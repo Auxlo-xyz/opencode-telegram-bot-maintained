@@ -53,8 +53,8 @@ export const it: I18nDictionary = {
   "inline.button.cancel": "❌ Annulla",
   "inline.button.close": "❌ Chiudi",
   "inline.inactive_callback": "Questo menu non è attivo",
-  "inline.cancelled_callback": "Annullato",
 
+  "common.cancelled": "Annullato",
   "common.unknown": "sconosciuto",
   "common.unknown_error": "errore sconosciuto",
 
@@ -217,7 +217,6 @@ export const it: I18nDictionary = {
   "messages.fetch_error":
     "🔴 Il server OpenCode non è disponibile o si è verificato un errore durante il caricamento dei messaggi.",
   "messages.inactive_callback": "Questo menu dei messaggi non è attivo",
-  "messages.cancelled_callback": "Annullato",
   "messages.page_empty_callback": "Nessun messaggio in questa pagina",
   "messages.button.prev_page": "⬅️ Prec",
   "messages.button.next_page": "Succ ➡️",
@@ -302,7 +301,6 @@ export const it: I18nDictionary = {
   "opencode_stop.error":
     "🔴 Si è verificato un errore durante l'arresto del server.\n\nControlla i log dell'applicazione per i dettagli.",
 
-  "agent.changed_callback": "Agente modificato: {name}",
   "agent.changed_message": "✅ Agente modificato in: {name}",
   "agent.change_error_callback": "Modifica dell'agente non riuscita",
   "agent.menu.current": "Agente corrente: {name}\n\nSeleziona agente:",
@@ -310,7 +308,6 @@ export const it: I18nDictionary = {
   "agent.menu.empty": "⚠️ Nessun agente disponibile",
   "agent.menu.error": "🔴 Recupero dell'elenco degli agenti non riuscito",
 
-  "model.changed_callback": "Modello modificato: {name}",
   "model.changed_message": "✅ Modello modificato in: {name}",
   "model.change_error_callback": "Modifica del modello non riuscita",
   "model.menu.empty": "⚠️ Nessun modello disponibile",
@@ -342,7 +339,6 @@ export const it: I18nDictionary = {
   "model.provider_models.page_indicator": "Pagina {current}/{total}",
 
   "variant.model_not_selected_callback": "Errore: modello non selezionato",
-  "variant.changed_callback": "Variante modificata: {name}",
   "variant.changed_message": "✅ Variante modificata in: {name}",
   "variant.change_error_callback": "Modifica della variante non riuscita",
   "variant.select_model_first": "⚠️ Seleziona prima un modello",
@@ -354,7 +350,6 @@ export const it: I18nDictionary = {
   "context.no_active_session": "⚠️ Nessuna sessione attiva. Crea una sessione con /new",
   "context.confirm_text":
     '📊 Compattazione del contesto per la sessione "{title}"\n\nQuesto ridurrà l\'uso del contesto rimuovendo i vecchi messaggi dalla cronologia. L\'attività corrente non verrà interrotta.\n\nContinuare?',
-  "context.callback_session_not_found": "Sessione non trovata",
   "context.callback_compacting": "Compattazione del contesto...",
   "context.progress": "⏳ Compattazione del contesto...",
   "context.error": "❌ Compattazione del contesto non riuscita",
@@ -512,8 +507,6 @@ export const it: I18nDictionary = {
   "task.button.retry_schedule": "🔁 Reinserisci la pianificazione",
   "task.button.cancel": "❌ Annulla",
   "task.retry_schedule_callback": "Reinserimento della pianificazione...",
-  "task.cancel_callback": "Annullamento...",
-  "task.cancelled": "❌ Creazione dell'attività pianificata annullata.",
   "task.inactive_callback": "Questo flusso di attività pianificata non è attivo",
   "task.inactive": "⚠️ La creazione dell'attività pianificata non è attiva. Esegui /task di nuovo.",
   "task.blocked.expected_input":
@@ -540,7 +533,6 @@ export const it: I18nDictionary = {
   "tasklist.button.delete": "🗑 Elimina",
   "tasklist.button.cancel": "❌ Annulla",
   "tasklist.deleted_callback": "Eliminato",
-  "tasklist.cancelled_callback": "Annullato",
   "tasklist.inactive_callback": "Questo menu delle attività pianificate non è attivo",
   "tasklist.load_error": "🔴 Caricamento delle attività pianificate non riuscito.",
 
@@ -553,7 +545,6 @@ export const it: I18nDictionary = {
   "commands.confirm":
     "Conferma l'esecuzione del comando {command}. Per eseguirlo con argomenti, invia gli argomenti come messaggio.",
   "commands.inactive_callback": "Questo menu dei comandi non è attivo",
-  "commands.cancelled_callback": "Annullato",
   "commands.execute_callback": "Esecuzione del comando...",
   "commands.executing_prefix": "⚡ Esecuzione del comando:",
   "commands.arguments_empty": "⚠️ Gli argomenti non possono essere vuoti. Invia del testo o premi Esegui.",
@@ -581,7 +572,6 @@ export const it: I18nDictionary = {
   "skills.confirm":
     "Conferma l'uso della skill {skill}. Per usarla con argomenti, invia gli argomenti come messaggio.",
   "skills.inactive_callback": "Questo menu delle skill non è attivo",
-  "skills.cancelled_callback": "Annullato",
   "skills.execute_callback": "Uso della skill...",
   "skills.executing_prefix": "⚡ Uso della skill:",
   "skills.arguments_empty": "⚠️ Gli argomenti non possono essere vuoti. Invia del testo o premi Esegui.",

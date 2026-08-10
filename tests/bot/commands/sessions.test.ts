@@ -384,8 +384,8 @@ describe("bot/commands/sessions", () => {
 
     expect(handled).toBe(true);
     expect(mocked.clearInteractionMock).toHaveBeenCalledWith("session_select_error");
-    expect(ctx.answerCallbackQuery).toHaveBeenCalled();
-    expect(ctx.reply).toHaveBeenCalledWith(t("sessions.select_error"));
+    expect(ctx.answerCallbackQuery).toHaveBeenCalledWith({ text: t("sessions.select_error") });
+    expect(ctx.reply).not.toHaveBeenCalled();
   });
 
   it("resolves the project agent before sending the keyboard for an existing session", async () => {
