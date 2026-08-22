@@ -28,6 +28,7 @@ describe("bot/routers/command-router", () => {
       "settings",
       "opencode_start",
       "opencode_stop",
+      "opencode_restart",
       "projects",
       "worktree",
       "open",

@@ -17,6 +17,7 @@ export const it: I18nDictionary = {
   "cmd.description.mcps": "Server MCP",
   "cmd.description.opencode_start": "Avvia il server OpenCode",
   "cmd.description.opencode_stop": "Ferma il server OpenCode",
+  "cmd.description.opencode_restart": "Riavvia OpenCode in sicurezza",
   "cmd.description.ls": "Elenca il contenuto della directory",
   "cmd.description.help": "Aiuto",
 
@@ -300,6 +301,15 @@ export const it: I18nDictionary = {
   "opencode_stop.success": "✅ Server OpenCode arrestato correttamente",
   "opencode_stop.error":
     "🔴 Si è verificato un errore durante l'arresto del server.\n\nControlla i log dell'applicazione per i dettagli.",
+
+  "opencode_start.supervised_success": "✅ Il server OpenCode è pronto sotto il supervisore persistente\n\nVersione: {version}",
+  "opencode_stop.supervised_message": "ℹ️ Il server OpenCode è gestito da un supervisore e non può essere arrestato da Telegram.\n\nUsa /opencode_restart per riavviarlo in sicurezza.",
+  "opencode_stop.restarting": "🔄 Riavvio del server OpenCode supervisionato...",
+  "opencode_stop.restart_error": "🔴 Il server OpenCode supervisionato non è diventato pronto. Prova /status tra qualche secondo.",
+  "opencode_restart.remote_configured": "⚠️ /opencode_restart funziona solo con un server OpenCode locale.",
+  "opencode_restart.starting": "🔄 Riavvio sicuro di OpenCode sotto il supervisore persistente...",
+  "opencode_restart.success": "✅ Server OpenCode riavviato in sicurezza\n\nVersione: {version}",
+  "opencode_restart.error": "🔴 Riavvio sicuro di OpenCode non riuscito. Prova /status.",
 
   "agent.changed_message": "✅ Agente modificato in: {name}",
   "agent.change_error_callback": "Modifica dell'agente non riuscita",

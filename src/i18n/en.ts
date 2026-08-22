@@ -15,6 +15,7 @@ export const en = {
   "cmd.description.mcps": "MCP servers",
   "cmd.description.opencode_start": "Start OpenCode server",
   "cmd.description.opencode_stop": "Stop OpenCode server",
+  "cmd.description.opencode_restart": "Restart OpenCode safely",
   "cmd.description.ls": "List directory contents",
   "cmd.description.help": "Help",
 
@@ -270,7 +271,7 @@ export const en = {
   "opencode_start.start_error":
     "🔴 Failed to start OpenCode Server\n\nError: {error}\n\nCheck that OpenCode CLI is installed and available in PATH:\nopencode --version\nnpm install -g @opencode-ai/cli",
   "opencode_start.started_not_ready":
-    "⚠️ OpenCode Server started, but is not responding\n\nPID: {pid}\n\nServer may still be starting. Try /status in a few seconds.",
+    "⚠️ OpenCode Server started, but is not responding\n\nThe supervisor may still be converging. Try /status in a few seconds.",
   "opencode_start.success":
     "✅ OpenCode Server started successfully\n\nPID: {pid}\nVersion: {version}",
   "opencode_start.error":
@@ -287,6 +288,15 @@ export const en = {
   "opencode_stop.success": "✅ OpenCode Server stopped successfully",
   "opencode_stop.error":
     "🔴 An error occurred while stopping server.\n\nCheck application logs for details.",
+
+  "opencode_start.supervised_success": "✅ OpenCode Server is ready under the persistent supervisor\n\nVersion: {version}",
+  "opencode_stop.supervised_message": "ℹ️ OpenCode Server is supervisor-managed and cannot be stopped from Telegram.\n\nUse /opencode_restart to restart it safely after adding skills.",
+  "opencode_stop.restarting": "🔄 Restarting the supervised OpenCode Server...",
+  "opencode_stop.restart_error": "🔴 The supervised OpenCode Server did not become ready. Try /status in a few seconds.",
+  "opencode_restart.remote_configured": "⚠️ /opencode_restart works only with a local OpenCode Server.",
+  "opencode_restart.starting": "🔄 Restarting OpenCode safely under the persistent supervisor...",
+  "opencode_restart.success": "✅ OpenCode Server restarted safely\n\nVersion: {version}",
+  "opencode_restart.error": "🔴 Safe OpenCode restart failed. Try /status in a few seconds.",
 
   "agent.changed_message": "✅ Agent changed to: {name}",
   "agent.change_error_callback": "Failed to change agent",

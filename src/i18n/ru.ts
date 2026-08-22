@@ -17,6 +17,7 @@ export const ru: I18nDictionary = {
   "cmd.description.mcps": "MCP серверы",
   "cmd.description.opencode_start": "Запустить OpenCode сервер",
   "cmd.description.opencode_stop": "Остановить OpenCode сервер",
+  "cmd.description.opencode_restart": "Безопасно перезапустить OpenCode",
   "cmd.description.ls": "Список содержимого каталога",
   "cmd.description.help": "Справка",
 
@@ -290,6 +291,15 @@ export const ru: I18nDictionary = {
   "opencode_stop.success": "✅ OpenCode Server успешно остановлен",
   "opencode_stop.error":
     "🔴 Произошла ошибка при остановке сервера.\n\nПроверьте логи приложения для подробностей.",
+
+  "opencode_start.supervised_success": "✅ OpenCode Server готов под постоянным супервизором\n\nВерсия: {version}",
+  "opencode_stop.supervised_message": "ℹ️ OpenCode Server управляется супервизором и не может быть остановлен из Telegram.\n\nИспользуйте /opencode_restart для безопасного перезапуска.",
+  "opencode_stop.restarting": "🔄 Перезапускаю OpenCode Server под супервизором...",
+  "opencode_stop.restart_error": "🔴 OpenCode Server под супервизором не стал готовым. Попробуйте /status через несколько секунд.",
+  "opencode_restart.remote_configured": "⚠️ /opencode_restart работает только с локальным OpenCode Server.",
+  "opencode_restart.starting": "🔄 Безопасно перезапускаю OpenCode под постоянным супервизором...",
+  "opencode_restart.success": "✅ OpenCode Server безопасно перезапущен\n\nВерсия: {version}",
+  "opencode_restart.error": "🔴 Безопасный перезапуск OpenCode не удался. Попробуйте /status.",
 
   "agent.changed_message": "✅ Агент изменен на: {name}",
   "agent.change_error_callback": "Ошибка при смене агента",

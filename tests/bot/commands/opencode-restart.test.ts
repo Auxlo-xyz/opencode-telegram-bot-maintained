@@ -6,9 +6,8 @@ import { t } from "../../../src/i18n/index.js";
 const mocked = vi.hoisted(() => ({
   healthMock: vi.fn(),
   resolveLocalOpencodeTargetMock: vi.fn(),
-  launchSupervisorMock: vi.fn(),
+  launchSafeRestartMock: vi.fn(),
   waitForSupervisedServerReadyMock: vi.fn(),
-  notifyReadyMock: vi.fn(),
   editBotTextMock: vi.fn(),
   loggerDebugMock: vi.fn(),
   loggerInfoMock: vi.fn(),
@@ -21,37 +20,20 @@ const mocked = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("../../../src/config.js", () => ({
-  config: mocked.config,
-}));
-
+vi.mock("../../../src/config.js", () => ({ config: mocked.config }));
 vi.mock("../../../src/opencode/client.js", () => ({
-  opencodeClient: {
-    global: {
-      health: mocked.healthMock,
-    },
-  },
+  opencodeClient: { global: { health: mocked.healthMock } },
 }));
-
 vi.mock("../../../src/opencode/process.js", () => ({
   resolveLocalOpencodeTarget: mocked.resolveLocalOpencodeTargetMock,
 }));
-
 vi.mock("../../../src/opencode/supervised-server-control.js", () => ({
-  launchSupervisor: mocked.launchSupervisorMock,
+  launchSafeRestart: mocked.launchSafeRestartMock,
   waitForSupervisedServerReady: mocked.waitForSupervisedServerReadyMock,
 }));
-
 vi.mock("../../../src/bot/messages/telegram-text.js", () => ({
   editBotText: mocked.editBotTextMock,
 }));
-
-vi.mock("../../../src/opencode/ready-lifecycle.js", () => ({
-  opencodeReadyLifecycle: {
-    notifyReady: mocked.notifyReadyMock,
-  },
-}));
-
 vi.mock("../../../src/utils/logger.js", () => ({
   logger: {
     debug: mocked.loggerDebugMock,
@@ -61,7 +43,7 @@ vi.mock("../../../src/utils/logger.js", () => ({
   },
 }));
 
-import { opencodeStartCommand } from "../../../src/bot/commands/opencode-start-command.js";
+import { opencodeRestartCommand } from "../../../src/bot/commands/opencode-restart-command.js";
 
 function createContext(): Context {
   return {
@@ -72,18 +54,15 @@ function createContext(): Context {
 }
 
 function createChildProcess(): ChildProcess {
-  return {
-    once: vi.fn(),
-  } as unknown as ChildProcess;
+  return { once: vi.fn() } as unknown as ChildProcess;
 }
 
-describe("bot/commands/opencode-start-command", () => {
+describe("bot/commands/opencode-restart-command", () => {
   beforeEach(() => {
     mocked.healthMock.mockReset();
     mocked.resolveLocalOpencodeTargetMock.mockReset();
-    mocked.launchSupervisorMock.mockReset();
+    mocked.launchSafeRestartMock.mockReset();
     mocked.waitForSupervisedServerReadyMock.mockReset();
-    mocked.notifyReadyMock.mockReset();
     mocked.editBotTextMock.mockReset();
     mocked.loggerDebugMock.mockReset();
     mocked.loggerInfoMock.mockReset();
@@ -92,66 +71,45 @@ describe("bot/commands/opencode-start-command", () => {
 
     mocked.config.opencode.apiUrl = "http://localhost:4096";
     mocked.resolveLocalOpencodeTargetMock.mockReturnValue({ host: "localhost", port: 4096 });
+    mocked.launchSafeRestartMock.mockReturnValue(createChildProcess());
     mocked.waitForSupervisedServerReadyMock.mockResolvedValue(true);
-    mocked.notifyReadyMock.mockResolvedValue(true);
+    mocked.healthMock.mockResolvedValue({ data: { healthy: true, version: "1.2.3" }, error: null });
     mocked.editBotTextMock.mockResolvedValue(undefined);
-    mocked.launchSupervisorMock.mockReturnValue(createChildProcess());
   });
 
-  it("warns when OPENCODE_API_URL points to a remote server", async () => {
+  it("warns when the configured OpenCode URL is remote", async () => {
     const ctx = createContext();
     mocked.config.opencode.apiUrl = "https://example.com";
     mocked.resolveLocalOpencodeTargetMock.mockReturnValue(null);
 
-    await opencodeStartCommand(ctx as never);
+    await opencodeRestartCommand(ctx as never);
 
-    expect(ctx.reply).toHaveBeenCalledWith(t("opencode_start.remote_configured"));
-    expect(mocked.launchSupervisorMock).not.toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(t("opencode_restart.remote_configured"));
+    expect(mocked.launchSafeRestartMock).not.toHaveBeenCalled();
   });
 
-  it("reports that the server is already running when health-check succeeds", async () => {
+  it("launches the safe helper and waits for authenticated readiness", async () => {
     const ctx = createContext();
-    mocked.healthMock.mockResolvedValue({ data: { healthy: true, version: "1.2.3" }, error: null });
 
-    await opencodeStartCommand(ctx as never);
+    await opencodeRestartCommand(ctx as never);
 
-    expect(ctx.reply).toHaveBeenCalledWith(
-      t("opencode_start.already_running", { version: "1.2.3" }),
-    );
-    expect(mocked.launchSupervisorMock).not.toHaveBeenCalled();
-    expect(mocked.notifyReadyMock).toHaveBeenCalledWith("opencode_start_already_running");
-  });
-
-  it("launches the supervisor and reports readiness", async () => {
-    const ctx = createContext();
-    mocked.healthMock
-      .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce({ data: { healthy: true, version: "1.2.3" }, error: null });
-
-    await opencodeStartCommand(ctx as never);
-
-    expect(mocked.launchSupervisorMock).toHaveBeenCalledOnce();
+    expect(mocked.launchSafeRestartMock).toHaveBeenCalledOnce();
     expect(mocked.waitForSupervisedServerReadyMock).toHaveBeenCalledOnce();
     expect(mocked.editBotTextMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        text: t("opencode_start.supervised_success", { version: "1.2.3" }),
+        text: t("opencode_restart.success", { version: "1.2.3" }),
       }),
     );
-    expect(mocked.notifyReadyMock).toHaveBeenCalledWith("opencode_start_success");
   });
 
-  it("reports when the supervisor does not make the server ready", async () => {
+  it("reports a restart that never becomes ready", async () => {
     const ctx = createContext();
-    mocked.healthMock.mockRejectedValue(new Error("offline"));
     mocked.waitForSupervisedServerReadyMock.mockResolvedValue(false);
 
-    await opencodeStartCommand(ctx as never);
+    await opencodeRestartCommand(ctx as never);
 
     expect(mocked.editBotTextMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        text: t("opencode_start.started_not_ready"),
-      }),
+      expect.objectContaining({ text: t("opencode_restart.error") }),
     );
-    expect(mocked.notifyReadyMock).not.toHaveBeenCalled();
   });
 });

@@ -17,6 +17,7 @@ export const de: I18nDictionary = {
   "cmd.description.mcps": "MCP servers",
   "cmd.description.opencode_start": "OpenCode-Server starten",
   "cmd.description.opencode_stop": "OpenCode-Server stoppen",
+  "cmd.description.opencode_restart": "OpenCode sicher neu starten",
   "cmd.description.ls": "Verzeichnisinhalt auflisten",
   "cmd.description.help": "Hilfe",
 
@@ -304,6 +305,15 @@ export const de: I18nDictionary = {
   "opencode_stop.success": "✅ OpenCode-Server erfolgreich gestoppt",
   "opencode_stop.error":
     "🔴 Beim Stoppen des Servers ist ein Fehler aufgetreten.\n\nSiehe Anwendungslogs für Details.",
+
+  "opencode_start.supervised_success": "✅ OpenCode-Server ist unter dem persistenten Supervisor bereit\n\nVersion: {version}",
+  "opencode_stop.supervised_message": "ℹ️ Der OpenCode-Server wird vom Supervisor verwaltet und kann nicht über Telegram gestoppt werden.\n\nNutze /opencode_restart für einen sicheren Neustart.",
+  "opencode_stop.restarting": "🔄 Starte den überwachten OpenCode-Server neu...",
+  "opencode_stop.restart_error": "🔴 Der überwachte OpenCode-Server wurde nicht bereit. Versuche es in einigen Sekunden mit /status.",
+  "opencode_restart.remote_configured": "⚠️ /opencode_restart funktioniert nur mit einem lokalen OpenCode-Server.",
+  "opencode_restart.starting": "🔄 Starte OpenCode sicher unter dem persistenten Supervisor neu...",
+  "opencode_restart.success": "✅ OpenCode-Server sicher neu gestartet\n\nVersion: {version}",
+  "opencode_restart.error": "🔴 Sicherer OpenCode-Neustart fehlgeschlagen. Versuche es mit /status.",
 
   "agent.changed_message": "✅ Agent geändert zu: {name}",
   "agent.change_error_callback": "Agent konnte nicht geändert werden",

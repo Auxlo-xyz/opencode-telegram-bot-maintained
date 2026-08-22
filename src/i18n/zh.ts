@@ -17,6 +17,7 @@ export const zh: I18nDictionary = {
   "cmd.description.mcps": "MCP servers",
   "cmd.description.opencode_start": "启动 OpenCode 服务器",
   "cmd.description.opencode_stop": "停止 OpenCode 服务器",
+  "cmd.description.opencode_restart": "安全重启 OpenCode",
   "cmd.description.ls": "列出目录内容",
   "cmd.description.help": "帮助",
 
@@ -257,6 +258,15 @@ export const zh: I18nDictionary = {
   "opencode_stop.still_running": "停止请求后服务器仍在响应。",
   "opencode_stop.success": "✅ OpenCode 服务器已成功停止",
   "opencode_stop.error": "🔴 停止服务器时发生错误。\n\n请查看应用日志了解详情。",
+
+  "opencode_start.supervised_success": "✅ OpenCode 服务器已在持久化监管器下就绪\n\n版本：{version}",
+  "opencode_stop.supervised_message": "ℹ️ OpenCode 服务器由监管器管理，无法从 Telegram 停止。\n\n使用 /opencode_restart 安全重启。",
+  "opencode_stop.restarting": "🔄 正在重启受监管的 OpenCode 服务器...",
+  "opencode_stop.restart_error": "🔴 受监管的 OpenCode 服务器尚未就绪。几秒后尝试 /status。",
+  "opencode_restart.remote_configured": "⚠️ /opencode_restart 仅适用于本地 OpenCode 服务器。",
+  "opencode_restart.starting": "🔄 正在持久化监管器下安全重启 OpenCode...",
+  "opencode_restart.success": "✅ OpenCode 服务器已安全重启\n\n版本：{version}",
+  "opencode_restart.error": "🔴 OpenCode 安全重启失败。请尝试 /status。",
 
   "agent.changed_message": "✅ Agent 已切换为：{name}",
   "agent.change_error_callback": "切换 Agent 失败",

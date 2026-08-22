@@ -79,7 +79,7 @@ opencode serve
 
 > The bot connects to the local OpenCode API at `http://localhost:4096` by default.
 
-> After the bot is configured, you can also start and stop the local OpenCode server from Telegram with `/opencode_start` and `/opencode_stop`.
+> In the Vellum supervisor deployment, use `/opencode_start` or `/opencode_restart`; `/opencode_stop` reports supervisor ownership instead of killing the supervised child. See [`docs/VELLUM_SUPERVISOR.md`](./docs/VELLUM_SUPERVISOR.md).
 
 ### 3. Install & Run
 
@@ -152,7 +152,8 @@ opencode-telegram config
 | `/task`           | Create a scheduled task                                 |
 | `/tasklist`       | Browse and delete scheduled tasks                       |
 | `/opencode_start` | Start the local OpenCode server on the bot machine      |
-| `/opencode_stop`  | Stop the local OpenCode server on the bot machine       |
+| `/opencode_stop`  | Explain supervisor ownership in the Vellum deployment   |
+| `/opencode_restart` | Safely restart the supervised OpenCode server          |
 | `/help`           | Show available commands                                 |
 
 Any regular text message is sent as a prompt to the coding agent only when no blocking interaction is active. Voice/audio messages are transcribed and then sent as prompts when STT is configured.

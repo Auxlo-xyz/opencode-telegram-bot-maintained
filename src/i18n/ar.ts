@@ -24,6 +24,7 @@ export const ar: I18nDictionary = {
   "cmd.description.mcps": "خوادم MCP",
   "cmd.description.opencode_start": "تشغيل خادم OpenCode",
   "cmd.description.opencode_stop": "إيقاف خادم OpenCode",
+  "cmd.description.opencode_restart": "إعادة تشغيل OpenCode بأمان",
   "cmd.description.ls": "استعراض ملفات المجلد",
   "cmd.description.help": "المساعدة",
   "cmd.description.rename": "تغيير اسم الجلسة الحالية",
@@ -279,6 +280,15 @@ export const ar: I18nDictionary = {
   "opencode_stop.still_running": "لا يزال الخادم يستجيب بعد طلب الإيقاف.",
   "opencode_stop.success": "✅ تم إيقاف خادم OpenCode بنجاح",
   "opencode_stop.error": "🔴 حدث خطأ أثناء إيقاف الخادم.\n\nراجع سجلات التطبيق للتفاصيل.",
+
+  "opencode_start.supervised_success": "✅ خادم OpenCode جاهز تحت المشرف الدائم\n\nالإصدار: {version}",
+  "opencode_stop.supervised_message": "ℹ️ خادم OpenCode مُدار بواسطة المشرف ولا يمكن إيقافه من Telegram.\n\nاستخدم /opencode_restart لإعادة تشغيله بأمان بعد إضافة المهارات.",
+  "opencode_stop.restarting": "🔄 جارٍ إعادة تشغيل خادم OpenCode المُدار...",
+  "opencode_stop.restart_error": "🔴 لم يصبح خادم OpenCode المُدار جاهزًا. جرّب /status بعد بضع ثوانٍ.",
+  "opencode_restart.remote_configured": "⚠️ يعمل /opencode_restart فقط مع خادم OpenCode محلي.",
+  "opencode_restart.starting": "🔄 جارٍ إعادة تشغيل OpenCode بأمان تحت المشرف الدائم...",
+  "opencode_restart.success": "✅ تمت إعادة تشغيل خادم OpenCode بأمان\n\nالإصدار: {version}",
+  "opencode_restart.error": "🔴 فشلت إعادة تشغيل OpenCode بأمان. جرّب /status بعد بضع ثوانٍ.",
 
   "agent.changed_message": "✅ تم تغيير الوكيل إلى: {name}",
   "agent.change_error_callback": "تعذر تغيير الوكيل",
